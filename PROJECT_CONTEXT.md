@@ -1350,9 +1350,8 @@ align names and payloads consistently during implementation.
   -------- ---------------------- --------------------------
   POST     `/api/auth/register`   Create account
   POST     `/api/auth/login`      Log in
-  POST     `/api/auth/logout`     Log out
-  GET      `/api/auth/me`         Get current user
-  POST     `/api/auth/refresh`    Refresh session, if used
+  POST     `/api/auth/logout`   Log out
+  GET      `/api/auth/me`       Get current user
 
 ## 13.2 Educators
 
@@ -1367,8 +1366,6 @@ align names and payloads consistently during implementation.
 
   PATCH                   `/api/educators/me`         Update own profile
 
-  PATCH                   `/api/educators/settings`   Update interaction
-                                                      settings
   ---------------------------------------------------------------------------
 
 ## 13.3 Skills
@@ -1426,8 +1423,11 @@ align names and payloads consistently during implementation.
   ------------------------------------------------------------------------------------
   Method                  Endpoint                             Purpose
   ----------------------- ------------------------------------ -----------------------
-  GET                     `/api/communities/:id`               Read community after
-                                                               access check
+  GET                     `/api/communities?scope=course&courseId=:id`
+                                                               Find course community
+
+  GET                     `/api/communities?scope=educator&educatorId=:id`
+                                                               Find educator community
 
   PATCH                   `/api/communities/:id/settings`      Update own community
                                                                settings
@@ -1437,19 +1437,14 @@ align names and payloads consistently during implementation.
 
   POST                    `/api/communities/:id/discussions`   Create discussion
 
-  GET                     `/api/discussions/:id`               Get discussion
+  POST                    `/api/communities/discussions/:id/answers`
+                                                               Add answer
 
-  POST                    `/api/discussions/:id/answers`       Add answer
-
-  POST                    `/api/discussions/:id/vote`          Vote
-
-  PATCH                   `/api/discussions/:id/resolve`       Resolve/accept answer
-
-  POST                    `/api/discussions/:id/report`        Report content, if
-                                                               implemented
+  PATCH                   `/api/communities/discussions/:id/resolve`
+                                                               Resolve/accept answer
   ------------------------------------------------------------------------------------
 
-## 13.7 Messaging --- optional
+## 13.7 Messaging --- persisted REST in the MVP
 
   -----------------------------------------------------------------------------------
   Method                  Endpoint                            Purpose
@@ -1461,8 +1456,7 @@ align names and payloads consistently during implementation.
 
   GET                     `/api/conversations/:id/messages`   Fetch history
 
-  POST                    `/api/conversations/:id/messages`   Persist message through
-                                                              REST if desired
+  POST                    `/api/conversations/:id/messages`   Persist message
   -----------------------------------------------------------------------------------
 
 ## 13.8 Mentorship --- optional
@@ -2008,37 +2002,45 @@ should repeatedly check.
 
 ------------------------------------------------------------------------
 
-# 25. Open implementation details (not settled product decisions)
+# 25. Implementation details and selected MVP decisions
 
-These details are deliberately left for the developer/AI to choose based
-on the actual implementation and time available. Do not mistake them for
-finalized product decisions.
+The following MVP implementation choices were confirmed with the product
+owner. They refine the implementation without changing the settled
+product direction:
+
+-   Course modules and lessons are embedded subdocuments in `Course`;
+    remove separate module and lesson models for the MVP.
+-   Implement the five recommended core workflows and basic communities.
+    Keep both community scopes as distinct entities.
+-   Use Razorpay test mode for paid course purchases. Store course prices
+    in INR paise and derive order amounts from the published course on
+    the server. Verify signatures and captured payment details
+    server-side before creating an enrollment. Reject live-mode keys.
+-   Keep the platform commission at zero until the product owner
+    finalizes a rate.
+-   Include persisted REST messaging. Defer Socket.IO and live delivery.
+-   Defer mentorship, media upload/playback, reviews, notifications,
+    subscriptions, teams, and analytics.
+
+Implementation choices are recorded in `docs/decisions.md`. Do not
+silently expand this MVP scope.
+
+The following decisions remain open for a later phase:
 
 -   Exact visual design, typography, and component library.
--   Exact payment provider and account configuration.
--   Exact video provider and plan.
--   Whether JWTs use cookies, refresh-token rotation, or another secure
-    session arrangement.
--   Whether course prices can be zero.
 -   Exact platform commission percentage.
 -   Exact review eligibility and moderation policy.
 -   Exact skill category taxonomy.
 -   Exact definition of trending/popular.
--   Exact message initiation eligibility beyond the educator's messaging
-    toggle.
--   Exact policy for learner-created posts in `educator_responses_only`
-    communities.
 -   Exact booking slot recurrence representation and pending-payment
     timeout.
 -   Whether a booking can be rescheduled/refunded in the initial
     version.
--   Whether skill votes can be removed.
 -   Whether a learner can re-enroll after a refund.
 -   Whether preview lessons require login.
--   Whether media playback uses signed URLs.
 -   Whether notifications are in-app, email, or deferred.
--   Whether the first deployment uses real payments or a clearly
-    labelled test mode.
+-   The video provider and signed-playback policy.
+-   Production payment onboarding and deployment configuration.
 
 When choosing among these, document the choice in `docs/decisions.md` or
 update this handoff document.
@@ -2095,7 +2097,7 @@ work incrementally.
 
 ## Task 6 --- Course authoring and moderation
 
--   Add Course, CourseModule, and Lesson models.
+-   Add a Course model with embedded module and lesson subdocuments.
 -   Implement educator-owned drafts.
 -   Implement module/lesson CRUD with ownership checks.
 -   Implement submission.
@@ -2123,7 +2125,7 @@ work incrementally.
 
 Only after core workflows work:
 
--   Messaging with Socket.IO.
+-   Real-time messaging with Socket.IO.
 -   Mentorship service and bookings.
 -   Reviews.
 -   Notifications.

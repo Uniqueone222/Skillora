@@ -108,7 +108,7 @@ p { line-height: 1.7; }
 .skill-card { min-height: 186px; display: flex; flex-direction: column; align-items: flex-start; padding: 21px; border: 1px solid var(--line); border-radius: 14px; background: #fff; transition: transform .2s, box-shadow .2s, border-color .2s; }
 .skill-card:hover, .course-card:hover { transform: translateY(-4px); border-color: #d6d1ff; box-shadow: var(--shadow); }
 .card-index { padding: 5px 8px; border-radius: 20px; background: #f2f1ff; color: #7268d8; font-size: 9px; font-weight: 700; }
-.skill-card strong { margin-top: 19px; font: 700 17px Manrope; letter-spacing: -.04em; }
+.skill-card strong { margin-top: 19px; font: 700 17px "Segoe UI", Arial, sans-serif; letter-spacing: -.04em; }
 .card-copy { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.6; }
 .card-arrow { display: flex; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 18px; color: #655bda; font-size: 10px; font-weight: 700; }
 .category-row { display: flex; align-items: center; gap: 10px; margin-top: 24px; overflow-x: auto; }
@@ -126,7 +126,7 @@ p { line-height: 1.7; }
 .course-art > span { z-index: 1; padding: 6px 9px; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; background: rgba(24,29,55,.13); font-size: 9px; }
 .course-art b { position: absolute; right: 26px; top: 15px; color: rgba(255,255,255,.57); font: 800 72px "Segoe UI", Arial, sans-serif; letter-spacing: -.1em; }
 .course-card-body { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding: 17px; }
-.course-card-body > strong { margin-top: 7px; font: 700 15px/1.4 Manrope; }
+.course-card-body > strong { margin-top: 7px; font: 700 15px/1.4 "Segoe UI", Arial, sans-serif; }
 .course-card-body > .muted { margin-top: 7px; font-size: 10px; }
 .course-card-foot { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 21px; padding-top: 13px; border-top: 1px solid #eff0f4; color: #252b3d; font-size: 11px; font-weight: 700; }
 .course-card-foot span:last-child { color: var(--violet-dark); font-size: 9px; }
@@ -144,8 +144,8 @@ p { line-height: 1.7; }
 .request-name b, .request-name small { display: block; }
 .request-name b { font-size: 11px; }
 .request-name small { max-width: 330px; margin-top: 4px; overflow: hidden; color: #858b9b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.vote-count { min-width: 36px; color: #2f3544; font: 700 14px Manrope; text-align: center; }
-.vote-count small { display: block; color: #9298a6; font: 9px "DM Sans"; }
+.vote-count { min-width: 36px; color: #2f3544; font: 700 14px "Segoe UI", Arial, sans-serif; text-align: center; }
+.vote-count small { display: block; color: #9298a6; font: 9px "Segoe UI", Arial, sans-serif; }
 .fine-print { display: block; margin-top: 13px; color: #989dab; font-size: 9px; line-height: 1.6; }
 .join-banner { min-height: 235px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; margin-bottom: 70px; padding: 37px 54px; border-radius: 20px; color: white; background: linear-gradient(110deg, #272552, #4e49a4 72%, #6f67ce); }
 .join-banner .eyebrow { color: #c7c3ff; }
@@ -170,7 +170,7 @@ p { line-height: 1.7; }
 .auth-aside { position: relative; min-height: 370px; display: flex; flex-direction: column; justify-content: center; padding: 40px; border-radius: 20px; color: white; background: radial-gradient(ellipse at 80% 0, #383462, transparent 50%), #171b31; }
 .auth-aside h1 { max-width: 380px; margin: 17px 0; font-size: 42px; line-height: 1.07; }
 .auth-aside p { max-width: 335px; color: #bec3d0; font-size: 13px; }
-.auth-aside-mark { position: absolute; right: 24px; bottom: -47px; color: rgba(125,114,241,.18); font: 800 190px Manrope; letter-spacing: -.1em; }
+.auth-aside-mark { position: absolute; right: 24px; bottom: -47px; color: rgba(125,114,241,.18); font: 800 190px "Segoe UI", Arial, sans-serif; letter-spacing: -.1em; }
 .auth-aside-mark span { color: rgba(179,238,218,.3); }
 .auth-card { width: min(100%, 420px); justify-self: center; padding: 36px; border: 1px solid #ececf2; border-radius: 17px; background: #fff; box-shadow: var(--shadow); }
 .auth-card h2 { margin: 10px 0 7px; font-size: 24px; }
@@ -202,7 +202,7 @@ p { line-height: 1.7; }
 .detail-art { height: 245px; position: relative; display: flex; align-items: flex-start; padding: 22px; overflow: hidden; margin-bottom: 30px; border-radius: 16px; color: white; background: linear-gradient(120deg, #3b4278, #8f85e1); }
 .detail-art::after { content: ""; position: absolute; right: 7%; bottom: -180px; width: 420px; height: 420px; border: 1px solid rgba(255,255,255,.5); border-radius: 50%; box-shadow: 0 0 0 35px rgba(255,255,255,.09), 0 0 0 70px rgba(255,255,255,.06); }
 .detail-art .eyebrow { z-index: 1; color: #eceaff; }
-.detail-art-letter { position: absolute; right: 50px; top: -10px; color: rgba(255,255,255,.3); font: 800 220px Manrope; }
+.detail-art-letter { position: absolute; right: 50px; top: -10px; color: rgba(255,255,255,.3); font: 800 220px "Segoe UI", Arial, sans-serif; }
 .detail-art-caption { position: absolute; left: 23px; bottom: 19px; color: rgba(255,255,255,.8); font-size: 10px; }
 .course-main h1 { margin: 10px 0; font-size: 39px; }
 .lead { color: #6e7588; font-size: 14px; line-height: 1.75; }

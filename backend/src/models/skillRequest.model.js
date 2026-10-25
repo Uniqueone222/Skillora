@@ -12,5 +12,9 @@ const skillRequestSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 skillRequestSchema.index({ normalizedName: 1, status: 1 });
+skillRequestSchema.index(
+  { normalizedName: 1 },
+  { unique: true, partialFilterExpression: { status: "pending" } }
+);
 
 export default mongoose.model("SkillRequest", skillRequestSchema);

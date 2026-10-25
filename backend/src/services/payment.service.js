@@ -128,16 +128,26 @@ export async function verifyWebhook(rawBody, signature) {
 }
 
 async function fulfill(transaction) {
-  const enrollment = await Enrollment.findOneAndUpdate(
-    { learnerId: transaction.payerId, courseId: transaction.courseId },
-    {
-      $setOnInsert: {
-        learnerId: transaction.payerId,
-        courseId: transaction.courseId,
-        transactionId: transaction._id
-      }
-    },
-    { upsert: true, new: true }
-  );
-  return { transaction, enrollment };
+  try {
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { learnerId: transaction.payerId, courseId: transaction.courseId },
+      {
+        $setOnInsert: {
+          learnerId: transaction.payerId,
+          courseId: transaction.courseId,
+          transactionId: transaction._id
+        }
+      },
+      { upsert: true, new: true }
+    );
+    return { transaction, enrollment };
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+    const enrollment = await Enrollment.findOne({
+      learnerId: transaction.payerId,
+      courseId: transaction.courseId
+    });
+    if (!enrollment) throw error;
+    return { transaction, enrollment };
+  }
 }

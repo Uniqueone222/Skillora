@@ -54,9 +54,17 @@ export async function createFreeEnrollment(userId, courseId) {
     status: "paid",
     paidAt: new Date()
   });
-  return Enrollment.findOneAndUpdate(
-    { learnerId: userId, courseId },
-    { $setOnInsert: { learnerId: userId, courseId, transactionId: transaction._id } },
-    { upsert: true, new: true }
-  );
+  try {
+    return await Enrollment.create({
+      learnerId: userId,
+      courseId,
+      transactionId: transaction._id
+    });
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+    await Transaction.deleteOne({ _id: transaction._id });
+    const enrollment = await Enrollment.findOne({ learnerId: userId, courseId });
+    if (!enrollment) throw error;
+    return enrollment;
+  }
 }

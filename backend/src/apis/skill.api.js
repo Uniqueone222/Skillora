@@ -5,6 +5,7 @@ import { authenticate } from "../middlewares/authenticate.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
   idParamSchema,
+  skillCoursesQuerySchema,
   skillQuerySchema,
   slugParamSchema
 } from "../validators/query.validator.js";
@@ -19,6 +20,7 @@ const votingLimiter = rateLimit({
 });
 router.get("/", validate(skillQuerySchema), controller.list);
 router.get("/requests", controller.listRequests);
+router.get("/:slug/courses", validate(skillCoursesQuerySchema), controller.courses);
 router.get("/:slug", validate(slugParamSchema), controller.get);
 router.post("/requests", votingLimiter, authenticate, validate(skillRequestSchema), controller.createRequest);
 router.post("/requests/:requestId/vote", votingLimiter, authenticate, validate(idParamSchema("requestId")), controller.vote);

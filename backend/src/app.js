@@ -6,6 +6,10 @@ import { rateLimit } from "express-rate-limit";
 import authApi from "./apis/auth.api.js";
 import educatorApi from "./apis/educator.api.js";
 import skillApi from "./apis/skill.api.js";
+import courseApi from "./apis/course.api.js";
+import enrollmentApi from "./apis/enrollment.api.js";
+import paymentApi from "./apis/payment.api.js";
+import adminApi from "./apis/admin.api.js";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
@@ -31,6 +35,10 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authLimiter, authApi);
 app.use("/api/educators", educatorApi);
 app.use("/api/skills", skillApi);
+app.use("/api/courses", courseApi);
+app.use("/api/enrollments", enrollmentApi);
+app.use("/api/payments", paymentApi);
+app.use("/api/admin", adminApi);
 app.use(notFound);
 app.use(errorHandler);
 

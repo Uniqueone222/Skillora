@@ -1,4 +1,5 @@
 import * as skillService from "../services/skill.service.js";
+import * as courseService from "../services/course.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const list = asyncHandler(async (req, res) => {
@@ -9,6 +10,15 @@ export const list = asyncHandler(async (req, res) => {
 export const get = asyncHandler(async (req, res) => {
   const skill = await skillService.getSkill(req.params.slug);
   res.json({ success: true, data: { skill } });
+});
+
+export const courses = asyncHandler(async (req, res) => {
+  const skill = await skillService.getSkill(req.params.slug);
+  const courses = await courseService.listPublishedCourses({
+    skillId: skill._id,
+    limit: req.validated.query.limit
+  });
+  res.json({ success: true, data: { skill, courses } });
 });
 
 export const createRequest = asyncHandler(async (req, res) => {

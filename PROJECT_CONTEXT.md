@@ -607,27 +607,29 @@ A course community should be used for questions about that course. An
 educator-wide community should support general questions, resources,
 projects, announcements, and cross-course conversation.
 
-The educator-response-only mode needs an unambiguous implementation
-policy. For example, the system may allow learners to create questions
-but only educators to answer. Whatever policy is chosen must be enforced
-server-side and reflected clearly in the UI.
+For the MVP policy, learners may create questions, but only the educator
+can answer when `educator_responses_only` is selected. Enforce that rule
+server-side and reflect it clearly in the UI.
 
 ## 7.7 Direct messaging
 
 A learner may contact an educator only if the educator has enabled
 messaging.
 
+For the MVP, any registered user may start a conversation with an
+educator whose messaging is enabled. Messages are persisted and fetched
+through REST; real-time delivery and attachments are deferred.
+
 At minimum:
 
 -   Check `messagingEnabled` on the educator profile.
--   Check the user's eligibility to initiate contact under the current
-    product policy.
+-   Check that messaging is enabled when a learner starts a conversation.
 -   Verify both conversation participants.
 -   Prevent arbitrary users from reading another conversation.
 -   Validate message content and attachments.
 -   Persist messages in MongoDB.
 
-If Socket.IO is used:
+If Socket.IO is added in a future phase:
 
 -   MongoDB remains the source of truth.
 -   Save a message before emitting it.
@@ -795,15 +797,16 @@ Prioritize these workflows:
 5.  Community participation with course/educator scope and configurable
     access rules.
 
-If time permits, add direct messaging or a basic mentorship workflow. Do
-not let optional functionality destabilize the core.
+Persisted REST direct messaging is included after the core workflows at
+the product owner's request. Defer Socket.IO/live delivery and
+mentorship. Do not let optional functionality destabilize the core.
 
 ## 9.2 Future phases
 
 ### Phase 2
 
 -   Paid mentorship and booking.
--   Direct real-time messaging.
+-   Real-time messaging (Socket.IO).
 -   Course reviews and ratings.
 -   Notifications.
 -   Better educator earnings dashboard.
@@ -831,10 +834,12 @@ not let optional functionality destabilize the core.
 8.  Implement courses, modules, and lessons.
 9.  Implement course submission and admin approval.
 10. Implement course discovery and details.
-11. Implement payment or a clearly labelled test-payment path.
+11. Implement Razorpay test-mode purchase with server-derived prices and
+    verified payment status.
 12. Implement enrollment and protected course player.
 13. Implement course and educator communities.
-14. Add messaging or mentorship only if the core is stable.
+14. Add persisted REST messaging after the core workflows; mentorship
+    remains deferred.
 15. Test error cases and authorization.
 16. Deploy, write README, record demo, and verify submission links.
 
@@ -849,15 +854,15 @@ existing MERN experience.
   Layer              Recommended choice                      Purpose
   ------------------ --------------------------------------- ----------------------------------
   Frontend           React + Vite                            Web application
-  Styling            Tailwind CSS                            UI styling
+  Styling            Responsive custom CSS                   UI styling
   Routing            React Router                            Page navigation
-  Server state       TanStack Query (optional)               API cache and mutations
+  Server state       Axios                                   API requests
   Backend            Node.js + Express                       REST API and business logic
   Database           MongoDB + Mongoose                      Persistent data
   Authentication     JWT-based session approach + bcrypt     Identity
-  Real-time          Socket.IO, only if messaging is built   Live events
+  Messaging          REST + MongoDB                          Persisted conversations
   Video              Cloudinary or Mux                       External media storage/streaming
-  Payments           Razorpay (proposed)                     Payment processing
+  Payments           Razorpay test mode                      Payment processing (MVP)
   Frontend hosting   Vercel or equivalent                    Web deployment
   Backend hosting    Render or equivalent                    API deployment
   Version control    Git + GitHub                            Source history
@@ -884,7 +889,7 @@ complex infrastructure for the academic MVP.
 │ Public / Learner / Educator / Admin screens   │
 └──────────────────────┬────────────────────────┘
                        │ HTTPS REST
-                       │ Socket.IO if enabled
+                       │
 ┌──────────────────────▼────────────────────────┐
 │                 Express API                   │
 │ Routes → Middleware → Controllers → Services  │
@@ -911,38 +916,23 @@ backend/
 ├── src/
 │   ├── apis/
 │   │   ├── auth.api.js
-│   │   ├── user.api.js
 │   │   ├── educator.api.js
 │   │   ├── skill.api.js
-│   │   ├── skillRequest.api.js
 │   │   ├── course.api.js
-│   │   ├── module.api.js
-│   │   ├── lesson.api.js
 │   │   ├── enrollment.api.js
 │   │   ├── community.api.js
-│   │   ├── discussion.api.js
 │   │   ├── messaging.api.js
-│   │   ├── mentorship.api.js
-│   │   ├── booking.api.js
 │   │   ├── payment.api.js
 │   │   └── admin.api.js
 │   │
 │   ├── controllers/
 │   │   ├── auth.controller.js
-│   │   ├── user.controller.js
 │   │   ├── educator.controller.js
 │   │   ├── skill.controller.js
-│   │   ├── skillRequest.controller.js
 │   │   ├── course.controller.js
-│   │   ├── module.controller.js
-│   │   ├── lesson.controller.js
 │   │   ├── enrollment.controller.js
 │   │   ├── community.controller.js
-│   │   ├── discussion.controller.js
 │   │   ├── messaging.controller.js
-│   │   ├── mentorship.controller.js
-│   │   ├── booking.controller.js
-│   │   ├── payment.controller.js
 │   │   └── admin.controller.js
 │   │
 │   ├── models/
@@ -952,16 +942,11 @@ backend/
 │   │   ├── skillRequest.model.js
 │   │   ├── skillVote.model.js
 │   │   ├── course.model.js
-│   │   ├── courseModule.model.js
-│   │   ├── lesson.model.js
 │   │   ├── enrollment.model.js
 │   │   ├── community.model.js
 │   │   ├── discussion.model.js
-│   │   ├── answer.model.js
 │   │   ├── conversation.model.js
 │   │   ├── message.model.js
-│   │   ├── mentorshipService.model.js
-│   │   ├── booking.model.js
 │   │   └── transaction.model.js
 │   │
 │   ├── middlewares/
@@ -976,14 +961,10 @@ backend/
 │   │   ├── auth.service.js
 │   │   ├── educator.service.js
 │   │   ├── skill.service.js
-│   │   ├── skillRequest.service.js
 │   │   ├── course.service.js
 │   │   ├── enrollment.service.js
 │   │   ├── community.service.js
-│   │   ├── discussion.service.js
 │   │   ├── messaging.service.js
-│   │   ├── mentorship.service.js
-│   │   ├── booking.service.js
 │   │   └── payment.service.js
 │   │
 │   ├── validators/
@@ -995,12 +976,6 @@ backend/
 │   ├── config/
 │   │   ├── db.js
 │   │   ├── env.js
-│   │   ├── cloudinary.js
-│   │   └── razorpay.js
-│   │
-│   ├── sockets/
-│   │   ├── index.js
-│   │   └── messaging.socket.js
 │   │
 │   ├── utils/
 │   │   ├── ApiError.js
@@ -1404,17 +1379,18 @@ align names and payloads consistently during implementation.
   GET                     `/api/skills`                    List/search approved
                                                            skills
 
-  GET                     `/api/skills/:id`                Skill details
+  GET      `/api/skills/:slug`              Skill details
 
-  GET                     `/api/skills/:id/courses`        Published courses for a
+  GET      `/api/skills/:slug/courses`      Published courses for a
                                                            skill
 
-  POST                    `/api/skill-requests`            Suggest a skill
+  GET      `/api/skills/requests`           List pending requests and votes
 
-  POST                    `/api/skill-requests/:id/vote`   Vote for a suggestion
+  POST     `/api/skills/requests`           Suggest a skill
 
-  DELETE                  `/api/skill-requests/:id/vote`   Remove own vote, if
-                                                           supported
+  POST     `/api/skills/requests/:id/vote`  Vote for a suggestion
+
+  DELETE   `/api/skills/requests/:id/vote`  Remove own vote
   --------------------------------------------------------------------------------
 
 ## 13.4 Courses and structure
@@ -1425,11 +1401,11 @@ align names and payloads consistently during implementation.
   GET      `/api/courses/:id`           Public course details
   POST     `/api/courses`               Create draft
   PATCH    `/api/courses/:id`           Edit own course
-  POST     `/api/courses/:id/submit`    Submit for moderation
-  POST     `/api/courses/:id/modules`   Add module
-  PATCH    `/api/modules/:id`           Edit module
-  POST     `/api/modules/:id/lessons`   Add lesson
-  PATCH    `/api/lessons/:id`           Edit lesson
+  POST     `/api/courses/:id/submit`                              Submit for moderation
+  POST     `/api/courses/:id/modules`                             Add embedded module
+  PATCH    `/api/courses/:id/modules/:moduleId`                    Edit embedded module
+  POST     `/api/courses/:id/modules/:moduleId/lessons`            Add embedded lesson
+  PATCH    `/api/courses/:id/modules/:moduleId/lessons/:lessonId`  Edit embedded lesson
 
 ## 13.5 Learning and enrollment
 
@@ -1439,9 +1415,7 @@ align names and payloads consistently during implementation.
   GET                     `/api/enrollments/my`                 List current user's
                                                                 enrollments
 
-  GET                     `/api/enrollments/:id`                Enrollment and progress
-
-  PATCH                   `/api/enrollments/:id/progress`       Update progress
+  PATCH    `/api/courses/:id/progress`           Update own progress
 
   GET                     `/api/courses/:id/learning-content`   Protected learning
                                                                 content

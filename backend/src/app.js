@@ -10,6 +10,8 @@ import courseApi from "./apis/course.api.js";
 import enrollmentApi from "./apis/enrollment.api.js";
 import paymentApi from "./apis/payment.api.js";
 import adminApi from "./apis/admin.api.js";
+import communityApi from "./apis/community.api.js";
+import messagingApi from "./apis/messaging.api.js";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
@@ -29,6 +31,12 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: "Too many authentication attempts; try again later" }
 });
+const messagingLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-8",
+  legacyHeaders: false
+});
 app.get("/api/health", (req, res) => {
   res.json({ success: true, data: { status: "ok", environment: env.NODE_ENV } });
 });
@@ -39,6 +47,8 @@ app.use("/api/courses", courseApi);
 app.use("/api/enrollments", enrollmentApi);
 app.use("/api/payments", paymentApi);
 app.use("/api/admin", adminApi);
+app.use("/api/communities", communityApi);
+app.use("/api/conversations", messagingLimiter, messagingApi);
 app.use(notFound);
 app.use(errorHandler);
 

@@ -30,6 +30,15 @@ test("administrator endpoints require authentication", async (context) => {
   assert.equal(response.status, 401);
 });
 
+test("messaging endpoints require authentication", async (context) => {
+  const server = app.listen(0);
+  context.after(() => new Promise((resolve) => server.close(resolve)));
+  await new Promise((resolve) => server.once("listening", resolve));
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/conversations`);
+  assert.equal(response.status, 401);
+});
+
 test("registration validates input before reaching persistence", async (context) => {
   const server = app.listen(0);
   context.after(() => new Promise((resolve) => server.close(resolve)));

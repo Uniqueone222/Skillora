@@ -6,7 +6,7 @@ import { formatINR, Loading, Notice } from "../components/ui.jsx";
 
 export default function CoursePage() {
   const { courseId } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [reviewData, setReviewData] = useState(null);
@@ -25,8 +25,9 @@ export default function CoursePage() {
       .catch((reason) => setError(errorMessage(reason)));
   }, [courseId]);
 
-  async function loadReviews() {
+  async function loadReviews(isActive = () => true) {
     const result = await request(`/courses/${courseId}/reviews`);
+    if (!isActive()) return;
     setReviewData(result);
     if (result.userReview) {
       setReviewRating(result.userReview.rating);
@@ -38,10 +39,15 @@ export default function CoursePage() {
   }
 
   useEffect(() => {
+    if (authLoading) return undefined;
+    let active = true;
     setReviewData(null);
     setReviewError("");
-    loadReviews().catch((reason) => setReviewError(errorMessage(reason)));
-  }, [courseId, user?._id]);
+    loadReviews(() => active).catch((reason) => {
+      if (active) setReviewError(errorMessage(reason));
+    });
+    return () => { active = false; };
+  }, [courseId, user?.id, authLoading]);
 
   useEffect(() => {
     if (!user) return;
@@ -148,31 +154,37 @@ export default function CoursePage() {
           <span className="fine-print">Payments are currently restricted to Razorpay test mode.</span>
         </aside>
       </div>
-      <section className="course-reviews" aria-labelledby="reviews-title">
+      <section className="course-reviews" id="reviews" aria-labelledby="reviews-title">
         <div className="section-heading">
           <div><span className="eyebrow">Learner feedback</span><h2 id="reviews-title">Reviews and ratings</h2></div>
           <span className="course-review-summary">★ {Number(reviewData?.ratingAverage ?? course.ratingAverage ?? 0).toFixed(1)} · {reviewData?.reviewCount ?? course.reviewCount ?? 0} reviews</span>
         </div>
         {reviewError && <Notice tone="error">{reviewError}</Notice>}
         {reviewNotice && <Notice tone="success">{reviewNotice}</Notice>}
+        {!reviewData && !reviewError && <p className="muted">Checking review eligibility…</p>}
         {reviewData?.canReview && <form className="review-form" onSubmit={submitReview}>
           <h3>{reviewData.userReview ? "Edit your review" : "Share your experience"}</h3>
-          <label>Rating
-            <select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>
-              <option value={5}>5 - Excellent</option>
-              <option value={4}>4 - Great</option>
-              <option value={3}>3 - Good</option>
-              <option value={2}>2 - Fair</option>
-              <option value={1}>1 - Poor</option>
-            </select>
-          </label>
+          <fieldset className="rating-picker">
+            <legend>Your rating</legend>
+            <div aria-label={`Selected rating: ${reviewRating} out of 5`}>
+              {[1, 2, 3, 4, 5].map((rating) => <button
+                className={rating <= reviewRating ? "rating-star selected" : "rating-star"}
+                key={rating}
+                type="button"
+                aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
+                aria-pressed={reviewRating === rating}
+                onClick={() => setReviewRating(rating)}
+              >★</button>)}
+              <span>{reviewRating}/5</span>
+            </div>
+          </fieldset>
           <label>Your review
             <textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} minLength={10} maxLength={2000} rows={4} required placeholder="What was useful about this course?" />
           </label>
           <button className="button" type="submit" disabled={reviewBusy}>{reviewBusy ? "Saving…" : reviewData.userReview ? "Update review" : "Submit review"}</button>
         </form>}
         {!user && <p className="fine-print"><Link to="/login">Sign in and enroll</Link> to leave a review. Reviews are limited to enrolled learners.</p>}
-        {user && !reviewData?.canReview && <p className="fine-print">Only enrolled learners can review a course. Educators cannot review their own courses.</p>}
+        {user && reviewData && !reviewData.canReview && <p className="fine-print">Enroll in this course to rate it and write a review. Course educators cannot review their own courses.</p>}
         {reviewData?.reviews?.length ? <div className="review-list">
           {reviewData.reviews.map((review) => <article className="review-card" key={review._id}>
             <div className="review-card-heading"><strong>{review.learnerId?.name || "Learner"}</strong><span>★ {review.rating}/5</span></div>

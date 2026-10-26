@@ -6,6 +6,7 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 
 - Email registration/login and educator activation on the same account.
 - Approved-skill discovery with skill/course description search, category, course-level and price filters; learner skill requests and one-vote-per-user moderation.
+- Educators can offer skills they teach for admin review; learners can separately request skills they want to learn and vote on community demand.
 - Educator profile and course authoring; modules and lessons are embedded in the course record.
 - Course submission and admin publication approval.
 - Course purchase with Razorpay **test-mode only**, free enrollment, server-verified payment fulfillment, protected learning-content access, and saved lesson progress.
@@ -72,7 +73,7 @@ npm run build
 ## API overview
 
 - `/api/auth` — register, login, logout, current user
-- `/api/skills` — approved skill catalogue, requests, votes, skill courses
+- `/api/skills` — approved skill catalogue, learner requests, educator offers, votes, skill courses
 - `/api/educators` — activation, public profile, profile editing, educator course list
 - `/api/courses` — public discovery (`sort=newest|rating|enrollments`), reviews (`GET/POST/PUT /:courseId/reviews`), educator drafts, modules/lessons, submission, protected learning content and progress
 - `/api/enrollments` — learner course library

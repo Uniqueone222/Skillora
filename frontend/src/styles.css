@@ -238,11 +238,19 @@ p { line-height: 1.7; }
 .review-form select, .review-form textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font: inherit; }
 .review-form textarea { resize: vertical; }
 .review-form .button { justify-self: start; }
+.rating-picker { display: grid; gap: 7px; padding: 0; border: 0; }
+.rating-picker legend { margin-bottom: 7px; color: #646b7d; font-size: 10px; font-weight: 700; }
+.rating-picker > div { display: flex; align-items: center; gap: 5px; }
+.rating-star { padding: 1px 3px; border: 0; background: transparent; color: #d5d7df; font-size: 25px; cursor: pointer; }
+.rating-star.selected { color: #e3a52f; }
+.rating-picker span { margin-left: 5px; color: var(--muted); font-size: 10px; }
 .review-list { display: grid; gap: 12px; margin-top: 20px; }
 .review-card { padding: 17px 19px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .review-card-heading { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; }
 .review-card p { margin: 12px 0; color: #60687b; font-size: 11px; line-height: 1.7; white-space: pre-wrap; }
 .review-card time { color: #9298a6; font-size: 9px; }
+.skill-offer-panel { padding: 25px; border: 1px solid var(--line); border-radius: 14px; background: #fbfaff; }
+.skill-offer-form { max-width: 720px; margin-top: 20px; }
 
 .dashboard-welcome { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 29px 34px; margin-bottom: 52px; border-radius: 16px; background: linear-gradient(110deg, #f4f3ff, #f8f9ff); }
 .dashboard-welcome h1 { margin: 8px 0 7px; font-size: 32px; }

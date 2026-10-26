@@ -454,18 +454,19 @@ Do not hardcode fake popularity claims. If popularity is implemented,
 document whether it is based on purchases, views, saves, or
 skill-request votes.
 
-## 7.2 Skill requests and votes
+## 7.2 Skill requests and educator offers
 
-Purpose: let learners express demand for skills not yet represented.
+Learners can express demand for skills not yet represented, and educators
+can offer skills they are qualified to teach.
 
 ``` text
-Learner submits missing skill
+Learner requests a skill or educator offers one
              |
              v
     SkillRequest is pending
              |
              v
- Other learners can vote once
+ Community members can vote once
              |
              v
       Admin reviews it
@@ -490,6 +491,8 @@ Rules:
 -   Prefer a separate `SkillVote` collection with a unique compound
     index over an unbounded voter array.
 -   Record who suggested the skill and who reviewed it.
+-   Record whether the suggestion is learner demand or an educator offer.
+-   Only accounts with educator capabilities may submit educator offers.
 -   Store moderation status and timestamps.
 -   Only approved skills should appear in public skill discovery.
 
@@ -795,7 +798,7 @@ Prioritize these workflows:
 4.  Course submission, admin approval, purchase/enrollment, and
     protected learning access.
 5.  Community participation with course/educator scope and configurable
-    access rules.
+    access rules, plus enrolled-learner course reviews and ratings.
 
 Persisted REST direct messaging is included after the core workflows at
 the product owner's request. Defer Socket.IO/live delivery and
@@ -807,7 +810,6 @@ mentorship. Do not let optional functionality destabilize the core.
 
 -   Paid mentorship and booking.
 -   Real-time messaging (Socket.IO).
--   Course reviews and ratings.
 -   Notifications.
 -   Better educator earnings dashboard.
 -   Subscription/bundle monetization.
@@ -2023,7 +2025,7 @@ product direction:
 -   Keep the platform commission at zero until the product owner
     finalizes a rate.
 -   Include persisted REST messaging. Defer Socket.IO and live delivery.
--   Defer mentorship, reviews, notifications, subscriptions, teams, and
+-   Defer mentorship, notifications, subscriptions, teams, and
     analytics.
 
 Implementation choices are recorded in `docs/decisions.md`. Do not

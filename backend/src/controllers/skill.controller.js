@@ -26,6 +26,11 @@ export const createRequest = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: { request } });
 });
 
+export const createOffer = asyncHandler(async (req, res) => {
+  const request = await skillService.createOffer(req.user._id, req.validated.body);
+  res.status(201).json({ success: true, data: { request } });
+});
+
 export const listRequests = asyncHandler(async (req, res) => {
   const requests = await skillService.listRequests(req.user?._id);
   res.json({ success: true, data: { requests } });

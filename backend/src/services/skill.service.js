@@ -36,7 +36,7 @@ export async function listRequests(userId) {
   ]);
 }
 
-export async function createRequest(userId, input) {
+export async function createRequest(userId, input, intent = "learn") {
   const normalizedName = normalizeSkillName(input.name);
   if (await Skill.exists({ normalizedName, status: "approved" })) {
     throw new ApiError(409, "That skill is already in the catalogue");
@@ -44,9 +44,13 @@ export async function createRequest(userId, input) {
   if (await SkillRequest.exists({ normalizedName, status: "pending" })) {
     throw new ApiError(409, "A matching skill suggestion is already awaiting review");
   }
-  const request = await SkillRequest.create({ ...input, normalizedName, suggestedBy: userId });
+  const request = await SkillRequest.create({ ...input, intent, normalizedName, suggestedBy: userId });
   await SkillVote.create({ skillRequestId: request._id, userId });
   return request;
+}
+
+export async function createOffer(userId, input) {
+  return createRequest(userId, input, "teach");
 }
 
 export async function vote(userId, requestId) {

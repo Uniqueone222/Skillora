@@ -7,6 +7,8 @@ export const skillRequestSchema = z.object({
   }).strict()
 });
 
+export const skillOfferSchema = skillRequestSchema;
+
 export const reviewSkillRequestSchema = z.object({
   params: z.object({ requestId: z.string().regex(/^[a-f\d]{24}$/i) }),
   body: z.object({

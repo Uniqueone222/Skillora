@@ -58,7 +58,7 @@ export default function AdminPage() {
 
   return (
     <div className="container section">
-      <div className="dashboard-welcome"><div><span className="eyebrow">Platform operations</span><h1>Review what comes next.</h1><p>Approve catalogue suggestions and review educator courses before public release.</p></div><span className="studio-emblem">⌘</span></div>
+      <div className="dashboard-welcome"><div><span className="eyebrow">Platform operations</span><h1>Review what comes next.</h1><p>Approve learner skill requests and educator skill offers, then review courses before public release.</p></div><span className="studio-emblem">⌘</span></div>
       {error && <Notice tone="error">{error}</Notice>}
       {notice && <Notice tone="success">{notice}</Notice>}
       <section className="section section-compact">
@@ -71,7 +71,7 @@ export default function AdminPage() {
             {skillRequests.map((item) => (
               <article className="moderation-card" key={item._id}>
                 <div>
-                  <span className="eyebrow">{item.voteCount || 0} learner votes</span>
+                  <span className="eyebrow">{item.intent === "teach" ? "Educator skill offer" : "Learner skill request"} · {item.voteCount || 0} votes</span>
                   <h3>{item.name}</h3>
                   <p>{item.description || "No additional description."}</p>
                   <small>Suggested {new Date(item.createdAt).toLocaleDateString()}</small>
@@ -83,7 +83,7 @@ export default function AdminPage() {
               </article>
             ))}
           </div>
-        ) : <div className="empty-state"><h3>No skill suggestions waiting</h3><p>New learner requests will appear here.</p></div>}
+        ) : <div className="empty-state"><h3>No skill suggestions waiting</h3><p>New learner requests and educator offers will appear here.</p></div>}
       </section>
       <section className="section section-compact">
         <div className="section-heading">

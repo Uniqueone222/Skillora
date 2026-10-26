@@ -4,6 +4,7 @@ const skillRequestSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true, maxlength: 100 },
   normalizedName: { type: String, required: true },
   description: { type: String, trim: true, maxlength: 500, default: "" },
+  intent: { type: String, enum: ["learn", "teach"], default: "learn", index: true },
   suggestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending", index: true },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

@@ -107,8 +107,29 @@ test("creating a skill request records the requester's initial vote", async (con
 
   assert.equal(created, request);
   assert.equal(requestInput.normalizedName, "clay sculpting");
+  assert.equal(requestInput.intent, "learn");
   assert.equal(requestInput.suggestedBy, userId);
   assert.deepEqual(voteInput, { skillRequestId: request._id, userId });
+});
+
+test("educator skill offers enter the same community queue with teaching intent", async (context) => {
+  const userId = new mongoose.Types.ObjectId();
+  const request = { _id: new mongoose.Types.ObjectId() };
+  let requestInput;
+  replaceMethod(context, Skill, "exists", async () => false);
+  replaceMethod(context, SkillRequest, "exists", async () => false);
+  replaceMethod(context, SkillRequest, "create", async (input) => {
+    requestInput = input;
+    return request;
+  });
+  replaceMethod(context, SkillVote, "create", async () => {});
+
+  assert.equal(await skillService.createOffer(userId, {
+    name: "Botanical illustration",
+    description: "I teach watercolor plant studies."
+  }), request);
+  assert.equal(requestInput.intent, "teach");
+  assert.equal(requestInput.suggestedBy, userId);
 });
 
 test("voting requires a pending request and returns the updated count", async (context) => {

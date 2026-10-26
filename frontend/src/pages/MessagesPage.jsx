@@ -37,7 +37,9 @@ export default function MessagesPage() {
       .catch((reason) => setError(errorMessage(reason)));
   }, [selected]);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function startConversation() {
     setBusy(true);
@@ -58,8 +60,10 @@ export default function MessagesPage() {
 
   async function send(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const body = form.get("body");
+    setError("");
     setBusy(true);
     try {
       const { message } = await request(`/conversations/${selected}/messages`, {
@@ -67,7 +71,7 @@ export default function MessagesPage() {
         data: { body }
       });
       setMessages((current) => [...current, { ...message, senderId: { _id: user.id, name: user.name } }]);
-      event.currentTarget.reset();
+      formElement.reset();
       await loadConversations();
     } catch (reason) {
       setError(errorMessage(reason));

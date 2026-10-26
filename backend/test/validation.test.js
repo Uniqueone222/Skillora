@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { registerSchema } from "../src/validators/auth.validator.js";
 import { createCourseSchema, courseReviewSchema } from "../src/validators/courses.validator.js";
 import { courseQuerySchema } from "../src/validators/query.validator.js";
+import { skillOfferSchema, skillRequestSchema } from "../src/validators/skills.validator.js";
 
 test("registration rejects short passwords and unknown fields", () => {
   assert.equal(registerSchema.safeParse({
@@ -63,4 +64,13 @@ test("course review and discovery sort inputs are constrained", () => {
   }).success, false);
   assert.equal(courseQuerySchema.safeParse({ query: { sort: "rating" } }).success, true);
   assert.equal(courseQuerySchema.safeParse({ query: { sort: "views" } }).success, false);
+});
+
+test("learner requests and educator offers accept only name and description", () => {
+  const skill = { name: "Botanical illustration", description: "Watercolor plant studies." };
+  assert.equal(skillRequestSchema.safeParse({ body: skill }).success, true);
+  assert.equal(skillOfferSchema.safeParse({ body: skill }).success, true);
+  assert.equal(skillOfferSchema.safeParse({
+    body: { ...skill, intent: "learn" }
+  }).success, false);
 });

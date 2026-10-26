@@ -164,7 +164,7 @@ export default function HomePage() {
         <div className="demand-copy">
           <span className="eyebrow">The catalogue grows with you</span>
           <h2>Can't find the skill<br />you're looking for?</h2>
-          <p>Suggest a missing skill. Learners can vote, and an administrator reviews the request before it enters the catalogue.</p>
+        <p>Request a skill you want to learn. Educators can offer skills from their studio, and learners can vote on community requests.</p>
           {!user && <Link className="button" to="/login">Sign in to suggest a skill <span>↗</span></Link>}
           {user && <form className="stack-form" onSubmit={suggestSkill}>
             <label>Skill name<input value={skillName} onChange={(event) => setSkillName(event.target.value)} minLength="2" maxLength="100" required placeholder="e.g. Ceramic glazing" /></label>
@@ -176,7 +176,7 @@ export default function HomePage() {
           <div className="request-panel-head"><span className="eyebrow">Community ideas</span><span className="live-mark"><i /> Pending review</span></div>
           {requests.length ? requests.map((item) => (
             <div className="request-row" key={item._id}>
-              <span className="request-glyph">＋</span><span className="request-name"><b>{item.name}</b><small>{item.description || "A learner-requested skill"}</small></span><span className="vote-count">{item.voteCount || 0}<small>votes</small></span>
+              <span className="request-glyph">＋</span><span className="request-name"><b>{item.name}</b><small>{item.intent === "teach" ? "Educator offer" : "Learner request"} · {item.description || "No additional details"}</small></span><span className="vote-count">{item.voteCount || 0}<small>votes</small></span>
               {user && <button className="button button-outline button-small" disabled={votingRequestId === item._id} onClick={() => vote(item)}>{votingRequestId === item._id ? "Saving…" : item.hasVoted ? "Remove vote" : "Vote"}</button>}
             </div>
           )) : <Empty title="Be the first to suggest">New skill requests will show up here.</Empty>}

@@ -16,6 +16,7 @@ export default function EducatorPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [courseForm, setCourseForm] = useState({ title: "", description: "", skillId: "", price: "0", difficulty: "beginner" });
+  const [skillOffer, setSkillOffer] = useState({ name: "", description: "" });
   const [profileForm, setProfileForm] = useState({ headline: "", biography: "", messagingEnabled: false });
 
   async function loadStudio() {
@@ -89,6 +90,22 @@ export default function EducatorPage() {
       setCourseForm((current) => ({ ...current, title: "", description: "", price: "0" }));
       setNotice("Draft created. Add at least one module and lesson before submitting for review.");
       await loadStudio();
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function suggestSkillOffer(event) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setBusy(true);
+    try {
+      await request("/skills/offers", { method: "POST", data: skillOffer });
+      setSkillOffer({ name: "", description: "" });
+      setNotice("Your skill offer was sent to the admin for catalogue review.");
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -219,6 +236,16 @@ export default function EducatorPage() {
           </form>
         </section>
       </div>
+      <section className="section section-compact skill-offer-panel">
+        <PageTitle eyebrow="Bring your expertise to Skillora" title="Suggest a skill you can teach">
+          If your expertise is not in the approved catalogue yet, suggest it here. Once an admin approves it, you can create courses for that skill.
+        </PageTitle>
+        <form className="stack-form skill-offer-form" onSubmit={suggestSkillOffer}>
+          <label>Skill you offer<input value={skillOffer.name} onChange={(event) => setSkillOffer({ ...skillOffer, name: event.target.value })} minLength="2" maxLength="100" required placeholder="e.g. Botanical illustration" /></label>
+          <label>What can learners expect?<textarea value={skillOffer.description} onChange={(event) => setSkillOffer({ ...skillOffer, description: event.target.value })} maxLength="500" rows="3" placeholder="Describe your experience and what you can teach." /></label>
+          <button className="button" disabled={busy}>{busy ? "Submitting…" : "Suggest this skill"} <span>↗</span></button>
+        </form>
+      </section>
       <section className="section section-compact">
         <div className="section-heading"><PageTitle eyebrow="Your teaching" title="Courses & drafts" />{courses.length > 0 && <span className="muted">{courses.length} total</span>}</div>
         {courses.length ? <div className="studio-course-list">{courses.map((course) => <article className="studio-course" key={course._id}>

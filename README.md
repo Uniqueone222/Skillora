@@ -2,6 +2,10 @@
 
 Skillora is a skill-first learning marketplace: learners start with a skill, compare independent educators and courses, and get access to learning and community support. A single account can both learn and teach.
 
+## Live application
+
+Visit [Skillora](https://skillora-bay.vercel.app/).
+
 ## Problem statement
 
 Learners often have to search across disconnected course platforms to find a skill, compare educators, and get help while learning. Independent educators need a straightforward way to publish expertise and reach learners.
@@ -90,34 +94,9 @@ Keep these values in the hosting provider's secret/environment-variable settings
 | `RAZORPAY_WEBHOOK_SECRET` | Optional | Enables signed webhooks; generated separately in the Razorpay Dashboard. |
 | `VITE_API_BASE_URL` | Optional | API base path. Defaults to `/api`; Vite proxies it locally and Vercel proxies it to Render in production. |
 
-## Deployment
-
-The repository includes deployment configuration for a static Vite frontend on **Vercel** and the Express API on **Render** (`render.yaml`, `frontend/vercel.json`). The Vercel rewrite proxies `/api/*` requests to Render, keeping browser API calls same-origin so HTTP-only session cookies work without relying on third-party cookies. The API health check is `/api/health`. MongoDB must be hosted separately (for example, MongoDB Atlas), with a database user and network access configured for the API host.
-
-1. Push the project to a GitHub repository. Do not commit `.env` files or credentials.
-2. Create the frontend project on Vercel with the project root set to `frontend`, deploy it, and note its public origin (for example, `https://skillora.vercel.app`). The API may not work until the backend is deployed.
-3. Create a MongoDB Atlas database. Create a database user and configure network access for the Render service.
-4. Create a Render Blueprint from the repository using the root [`render.yaml`](./render.yaml). Set `MONGODB_URI` and `CLIENT_URL` when prompted; `CLIENT_URL` is the exact Vercel origin.
-5. Confirm the Render API health check succeeds at `https://skillora-api.onrender.com/api/health`. If Render assigned a different service hostname, update the API destination in [`frontend/vercel.json`](./frontend/vercel.json) and redeploy Vercel.
-6. If paid-course testing is needed, add the Razorpay **test** key ID and matching key secret to Render's environment settings. Use test payment details only. Configure a webhook only if needed; its URL is `https://YOUR_API_HOST/api/payments/webhook`, and its separately generated secret must be configured both in the Razorpay Dashboard and Render environment settings.
-7. Add Cloudinary credentials to Render only if video uploads/playback are part of the demo. Review database access/security, verify no credentials are in Git history, and run the published app in a private/incognito window before submission.
-
-**Deployment status:** Deployment URLs have not been created yet. Replace the placeholders above and add the final frontend/API URLs here after deployment. Render free services may sleep, so the first API request after inactivity can be delayed.
-
-## Demo and submission
-
-The project guidelines recommend a **3–5 minute** demo video showing the product problem, target users, and its working learner, educator, and admin workflows. Keep the recording focused on the application rather than code.
-
-- **Demo video:** Not recorded yet.
-- **GitHub repository:** Add the public repository URL after it is available.
-- **Deployed application:** Add the Vercel URL after deployment.
-- **Official submission form:** [End-term project submission form](https://forms.gle/sBy4sfqyiRG2Zpom9). Submission is complete only after the form is completed.
-
 ## Payment and access integrity
 
 Educators set the course price while authoring; the backend stores integer INR paise. On checkout, the server reads the published course and creates the Razorpay order for that stored amount—it ignores client-supplied prices. The browser callback is not treated as proof: the backend verifies the HMAC signature and fetches the payment from Razorpay, checking order, currency, and amount. If the verified payment is only authorized, the backend captures it server-side before granting access. This browser verification flow works with the key ID and key secret and does not require a webhook secret. Signed webhooks are an additional server-to-server fulfillment path. Enrollment creation is idempotent and protected by a unique learner/course index. No platform commission is applied because a rate has not been decided.
-
-To enable webhooks, deploy the API to a publicly reachable HTTPS URL, add `https://YOUR_API_HOST/api/payments/webhook` in the Razorpay Dashboard under **Account & Settings → Webhooks**, and subscribe to `payment.captured` and `payment.failed`. Set a webhook secret in the dashboard, copy that exact value to `RAZORPAY_WEBHOOK_SECRET` in the backend environment, and restart the backend. This webhook secret is chosen/configured separately from the API key secret. Keep the endpoint secret server-side. Localhost cannot receive Razorpay dashboard webhooks without a secure public tunnel; checkout testing can proceed without webhooks.
 
 The client receives paid lesson metadata only after an enrollment check. The backend checks enrollment (or preview status/course ownership) again before issuing each signed playback URL; the frontend does not enforce entitlement by hiding a route. Cloudinary Free signed URLs remain shareable bearer links and are not time-limited.
 
@@ -156,4 +135,3 @@ npm run build
 - Messaging is REST-based; real-time delivery and Socket.IO are deferred.
 - Razorpay accepts test credentials only. Webhooks are inactive until a webhook secret is configured. Production payment onboarding, refunds, payouts, and platform-fee policy are not implemented.
 - Course prices use INR. Mentorship booking and other future-phase features are not included.
-- Deployment and demo URLs are still pending; see the deployment and submission sections above.

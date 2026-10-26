@@ -7,6 +7,14 @@ export const mine = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { enrollments } });
 });
 
+export const status = asyncHandler(async (req, res) => {
+  const enrolled = await enrollmentService.hasEnrollment(
+    req.user._id,
+    req.validated.params.courseId
+  );
+  res.json({ success: true, data: { enrolled } });
+});
+
 export const enrollFree = asyncHandler(async (req, res) => {
   const enrollment = await enrollmentService.createFreeEnrollment(
     req.user._id, req.validated.params.courseId

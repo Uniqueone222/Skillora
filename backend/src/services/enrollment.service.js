@@ -12,6 +12,10 @@ export async function listMine(userId) {
     .sort({ enrolledAt: -1 });
 }
 
+export async function hasEnrollment(userId, courseId) {
+  return Boolean(await Enrollment.exists({ learnerId: userId, courseId }));
+}
+
 export async function updateProgress(userId, courseId, { lessonId, completed }) {
   const enrollment = await Enrollment.findOne({ learnerId: userId, courseId });
   if (!enrollment) throw new ApiError(403, "An active enrollment is required");

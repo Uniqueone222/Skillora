@@ -52,6 +52,15 @@ test("educator skill offer endpoint requires authentication", async (context) =>
   assert.equal(response.status, 401);
 });
 
+test("course enrollment status endpoint requires authentication", async (context) => {
+  const server = app.listen(0);
+  context.after(() => new Promise((resolve) => server.close(resolve)));
+  await new Promise((resolve) => server.once("listening", resolve));
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/courses/aaaaaaaaaaaaaaaaaaaaaaaa/enrollment`);
+  assert.equal(response.status, 401);
+});
+
 test("video upload authorization and playback routes require authentication", async (context) => {
   const server = app.listen(0);
   context.after(() => new Promise((resolve) => server.close(resolve)));

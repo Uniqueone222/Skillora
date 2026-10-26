@@ -31,10 +31,10 @@ export default function DashboardPage() {
           if (!course) return null;
           const lessonCount = course.modules?.reduce((count, module) => count + module.lessons.length, 0) || 0;
           const progress = lessonCount ? Math.round((enrollment.completedLessonIds.length / lessonCount) * 100) : 0;
-          return <Link className="enrollment-card" key={enrollment._id} to={`/learn/${course._id}`}>
+          return <article className="enrollment-card" key={enrollment._id}>
             <div className="enrollment-art"><span>{course.skillId?.name || "Course"}</span><b>{course.title.slice(0, 1).toUpperCase()}</b></div>
-            <div className="enrollment-body"><span className="eyebrow">{course.skillId?.name}</span><h3>{course.title}</h3><p className="muted">with {course.educatorId?.name || "Independent educator"}</p><div className="progress-line"><i style={{ width: `${progress}%` }} /></div><span className="progress-caption">{progress}% complete · {lessonCount} lessons</span><span className="text-link">Continue learning ↗</span></div>
-          </Link>;
+            <div className="enrollment-body"><span className="eyebrow">{course.skillId?.name}</span><h3><Link to={`/courses/${course._id}`}>{course.title}</Link></h3><p className="muted">with {course.educatorId?.name || "Independent educator"}</p><div className="progress-line"><i style={{ width: `${progress}%` }} /></div><span className="progress-caption">{progress}% complete · {lessonCount} lessons</span><div className="enrollment-actions"><Link className="text-link" to={`/learn/${course._id}`}>Continue learning ↗</Link><Link className="text-link" to={`/courses/${course._id}`}>Course details ↗</Link></div></div>
+          </article>;
         })}</div>
       ) : <Empty title="Your first course is waiting">Browse the skill catalogue and enroll in a course to see it here.</Empty>}
       <div className="dashboard-cta"><div><span className="eyebrow">Teach a skill of your own</span><h2>Share what you know.</h2><p>Your learner account can become an educator account at any time.</p></div><Link className="button button-outline" to="/educator">{user.capabilities.includes("educator") ? "Open educator studio" : "Activate educator mode"} <span>↗</span></Link></div>

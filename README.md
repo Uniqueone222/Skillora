@@ -10,6 +10,7 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 - Educator profile and course authoring; modules and lessons are embedded in the course record.
 - Course submission and admin publication approval.
 - Course purchase with Razorpay **test-mode only**, free enrollment, server-verified payment fulfillment, protected learning-content access, and saved lesson progress.
+- The learner library links to both the learning player and course details; enrolled learners see their access status and can reopen the course without an enrollment CTA.
 - Educator uploads of MP4/WebM videos (up to 100 MB) directly to Cloudinary as authenticated media; playback URLs are signed server-side after preview, enrollment, or course-owner checks.
 - Enrolled learners can leave one 1–5 star review per published course and edit it later; discovery sorts courses by newest, rating, or enrollment count.
 - Separate course and educator communities with backend-enforced access settings, discussions, answers, and resolution.

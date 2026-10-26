@@ -264,7 +264,11 @@ p { line-height: 1.7; }
 .enrollment-art b { color: rgba(255,255,255,.5); font: 800 66px "Segoe UI", Arial, sans-serif; }
 .enrollment-body { padding: 16px; }
 .enrollment-body h3 { margin: 6px 0; font-size: 14px; }
+.enrollment-body h3 a { color: inherit; }
 .enrollment-body > .muted { font-size: 10px; }
+.enrollment-actions { display: flex; flex-wrap: wrap; gap: 15px; }
+.enrolled-actions { display: grid; gap: 9px; }
+.enrolled-status { color: #28744f; font-size: 11px; font-weight: 700; }
 .progress-line { height: 5px; overflow: hidden; border-radius: 5px; background: #eeeef3; }
 .progress-line i { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #776ee8, #a7a0ff); }
 .progress-caption { display: block; margin: 7px 0 12px; color: #858b9b; font-size: 9px; }

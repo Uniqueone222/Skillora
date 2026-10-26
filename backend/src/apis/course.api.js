@@ -44,6 +44,7 @@ router.get("/mine", authenticate, requireCapability("educator"), controller.myCo
 router.get("/:courseId/reviews", optionalAuthenticate, validate(courseReviewParamsSchema), controller.listReviews);
 router.post("/:courseId/reviews", authenticate, reviewLimiter, validate(courseReviewSchema), controller.createReview);
 router.put("/:courseId/reviews", authenticate, reviewLimiter, validate(courseReviewSchema), controller.updateReview);
+router.get("/:courseId/enrollment", authenticate, validate(idParamSchema("courseId")), enrollmentController.status);
 router.post("/", authenticate, requireCapability("educator"), validate(createCourseSchema), controller.create);
 router.post("/:courseId/enroll", authenticate, validate(idParamSchema("courseId")), enrollmentController.enrollFree);
 router.get("/:courseId/learning-content", authenticate, validate(idParamSchema("courseId")), controller.learningContent);

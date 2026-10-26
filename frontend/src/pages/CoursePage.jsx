@@ -9,6 +9,8 @@ export default function CoursePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrollmentChecked, setEnrollmentChecked] = useState(false);
   const [reviewData, setReviewData] = useState(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewBody, setReviewBody] = useState("");
@@ -55,6 +57,29 @@ export default function CoursePage() {
       .then(({ community: result }) => setCommunity(result))
       .catch(() => setCommunity(null));
   }, [courseId, user]);
+
+  useEffect(() => {
+    let active = true;
+    setEnrollmentChecked(false);
+    if (authLoading) return () => { active = false; };
+    if (!user) {
+      setEnrolled(false);
+      setEnrollmentChecked(true);
+      return () => { active = false; };
+    }
+
+    request(`/courses/${courseId}/enrollment`)
+      .then(({ enrolled: hasAccess }) => {
+        if (active) setEnrolled(hasAccess);
+      })
+      .catch((reason) => {
+        if (active) setError(errorMessage(reason));
+      })
+      .finally(() => {
+        if (active) setEnrollmentChecked(true);
+      });
+    return () => { active = false; };
+  }, [courseId, user?.id, authLoading]);
 
   async function submitReview(event) {
     event.preventDefault();
@@ -146,8 +171,10 @@ export default function CoursePage() {
           <span className="eyebrow">Start learning</span>
           <div className="price-large">{course.pricePaise === 0 ? "Free" : formatINR(course.pricePaise)}</div>
           <p>One-time course access. The backend calculates the price and grants access only after payment verification.</p>
-          {user ? <button className="button button-full" onClick={enroll} disabled={busy}>{busy ? "Preparing secure checkout…" : course.pricePaise === 0 ? "Enroll for free" : "Get course access"} <span>↗</span></button>
-            : <Link className="button button-full" to="/login">Sign in to enroll <span>↗</span></Link>}
+          {user && enrollmentChecked && enrolled && <div className="enrolled-actions"><span className="enrolled-status">Enrolled ✓</span><Link className="button button-full" to={`/learn/${course._id}`}>Go to course <span>↗</span></Link></div>}
+          {user && !enrollmentChecked && <span className="muted">Checking your enrollment…</span>}
+          {user && enrollmentChecked && !enrolled && <button className="button button-full" onClick={enroll} disabled={busy}>{busy ? "Preparing secure checkout…" : course.pricePaise === 0 ? "Enroll for free" : "Get course access"} <span>↗</span></button>}
+          {!user && <Link className="button button-full" to="/login">Sign in to enroll <span>↗</span></Link>}
           <ul className="purchase-checks"><li>Structured lessons</li><li>Progress saved to your account</li><li>Community access follows educator settings</li></ul>
           {community && <Link className="button button-outline button-full" to={`/community?scope=course&courseId=${course._id}`}>Open course community <span>↗</span></Link>}
           {course.educatorId?._id && <Link className="text-link purchase-message" to={`/educators/${course.educatorId._id}`}>View educator profile ↗</Link>}

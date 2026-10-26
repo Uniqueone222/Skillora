@@ -2,6 +2,20 @@
 
 Skillora is a skill-first learning marketplace: learners start with a skill, compare independent educators and courses, and get access to learning and community support. A single account can both learn and teach.
 
+## Problem statement
+
+Learners often have to search across disconnected course platforms to find a skill, compare educators, and get help while learning. Independent educators need a straightforward way to publish expertise and reach learners.
+
+## Target users
+
+- Learners looking for practical skills and courses from independent educators.
+- Independent educators who want to offer skills, publish courses, and support learners.
+- Platform administrators who review skill suggestions and course submissions.
+
+## Solution
+
+Skillora brings skill discovery, educator-led courses, learner communities, and protected course access into one application. Educators can propose skills they teach; learners can request missing skills and vote on demand. Admin moderation helps keep the public catalogue and course listings reviewed.
+
 ## MVP workflows
 
 - Email registration/login and educator activation on the same account.
@@ -17,6 +31,15 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 - Persisted REST direct messaging, controlled by each educator's messaging setting.
 
 Cloudinary credentials are optional for app startup; video upload/playback returns a configuration error until they are set. Cloudinary Free authenticated signed URLs are bearer links: anyone who obtains a playback URL can share it, and the URL does not expire. This MVP gates URL issuance by lesson preview/enrollment and does not provide per-viewer or short-lived playback tokens. Mentorship bookings, Socket.IO/live chat, notifications, subscriptions, teams, and analytics are deferred.
+
+## Tech stack
+
+- **Frontend:** React 19, Vite, React Router, Axios, custom responsive CSS.
+- **Backend:** Node.js, Express 5, Mongoose.
+- **Database:** MongoDB.
+- **Authentication:** JWT in HTTP-only cookies; bcrypt password hashing.
+- **Payments:** Razorpay test mode.
+- **Video:** Cloudinary authenticated video assets.
 
 ## Architecture
 
@@ -45,10 +68,50 @@ backend/src/middlewares/ Authentication, authorization, validation, errors
 4. To enable video uploads, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`. Configure all three or leave all three blank. Never expose the API secret in frontend environment variables. Videos upload directly from the browser to Cloudinary; the backend signs upload requests and verifies provider metadata before attaching a lesson.
 5. To test paid checkout, configure Razorpay **test** key ID (`rzp_test_...`) and matching key secret. These two credentials enable checkout; the server rejects live-mode key IDs. Never put the key secret in frontend environment variables. A webhook secret is separate and optional for checkout.
 6. Install frontend dependencies: `npm --prefix frontend install`
-7. Copy `frontend/.env.example` to `frontend/.env` if the API is not at `http://localhost:5000/api`.
+7. Copy `frontend/.env.example` to `frontend/.env`; `/api` is proxied by Vite to `http://localhost:5000` during local development.
 8. Run `npm run dev:api` and `npm run dev:web` in separate terminals.
 
 The API validates required configuration and connects to MongoDB before it starts listening. The web app is served at `http://localhost:5173`; the health endpoint is `http://localhost:5000/api/health`.
+
+## Environment variables
+
+Keep these values in the hosting provider's secret/environment-variable settings, not in source control. `backend/.env.example` and `frontend/.env.example` contain local-development examples.
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `NODE_ENV` | Deployment | Set to `production` for hosted backend deployments. |
+| `PORT` | Hosting assigns it | API listening port; do not hardcode a production value. |
+| `MONGODB_URI` | Yes | MongoDB connection string. Restrict database network access to the hosting provider where possible. |
+| `JWT_ACCESS_SECRET` | Yes | Long random signing secret; keep it private and persistent between deploys. |
+| `CLIENT_URL` | Yes | Exact deployed frontend origin, including `https://` and no trailing path. |
+| `ADMIN_EMAILS` | Optional | Comma-separated addresses granted admin role when they register. |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Optional, as a set | Enables authenticated video uploads and playback. Never expose the API secret to the frontend. |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Optional for free courses; needed for paid checkout | Use test-mode credentials (`rzp_test_...`) only. Keep the key secret server-side. |
+| `RAZORPAY_WEBHOOK_SECRET` | Optional | Enables signed webhooks; generated separately in the Razorpay Dashboard. |
+| `VITE_API_BASE_URL` | Optional | API base path. Defaults to `/api`; Vite proxies it locally and Vercel proxies it to Render in production. |
+
+## Deployment
+
+The repository includes deployment configuration for a static Vite frontend on **Vercel** and the Express API on **Render** (`render.yaml`, `frontend/vercel.json`). The Vercel rewrite proxies `/api/*` requests to Render, keeping browser API calls same-origin so HTTP-only session cookies work without relying on third-party cookies. The API health check is `/api/health`. MongoDB must be hosted separately (for example, MongoDB Atlas), with a database user and network access configured for the API host.
+
+1. Push the project to a GitHub repository. Do not commit `.env` files or credentials.
+2. Create the frontend project on Vercel with the project root set to `frontend`, deploy it, and note its public origin (for example, `https://skillora.vercel.app`). The API may not work until the backend is deployed.
+3. Create a MongoDB Atlas database. Create a database user and configure network access for the Render service.
+4. Create a Render Blueprint from the repository using the root [`render.yaml`](./render.yaml). Set `MONGODB_URI` and `CLIENT_URL` when prompted; `CLIENT_URL` is the exact Vercel origin.
+5. Confirm the Render API health check succeeds at `https://skillora-api.onrender.com/api/health`. If Render assigned a different service hostname, update the API destination in [`frontend/vercel.json`](./frontend/vercel.json) and redeploy Vercel.
+6. If paid-course testing is needed, add the Razorpay **test** key ID and matching key secret to Render's environment settings. Use test payment details only. Configure a webhook only if needed; its URL is `https://YOUR_API_HOST/api/payments/webhook`, and its separately generated secret must be configured both in the Razorpay Dashboard and Render environment settings.
+7. Add Cloudinary credentials to Render only if video uploads/playback are part of the demo. Review database access/security, verify no credentials are in Git history, and run the published app in a private/incognito window before submission.
+
+**Deployment status:** Deployment URLs have not been created yet. Replace the placeholders above and add the final frontend/API URLs here after deployment. Render free services may sleep, so the first API request after inactivity can be delayed.
+
+## Demo and submission
+
+The project guidelines recommend a **3–5 minute** demo video showing the product problem, target users, and its working learner, educator, and admin workflows. Keep the recording focused on the application rather than code.
+
+- **Demo video:** Not recorded yet.
+- **GitHub repository:** Add the public repository URL after it is available.
+- **Deployed application:** Add the Vercel URL after deployment.
+- **Official submission form:** [End-term project submission form](https://forms.gle/sBy4sfqyiRG2Zpom9). Submission is complete only after the form is completed.
 
 ## Payment and access integrity
 
@@ -93,4 +156,4 @@ npm run build
 - Messaging is REST-based; real-time delivery and Socket.IO are deferred.
 - Razorpay accepts test credentials only. Webhooks are inactive until a webhook secret is configured. Production payment onboarding, refunds, payouts, and platform-fee policy are not implemented.
 - Course prices use INR. Mentorship booking and other future-phase features are not included.
-- No deployment or demo URLs have been configured.
+- Deployment and demo URLs are still pending; see the deployment and submission sections above.

@@ -129,11 +129,18 @@ export default function CoursePage() {
             await request("/payments/verify", { method: "POST", data: response });
             navigate(`/learn/${course._id}`);
           } catch (reason) {
-            setError(errorMessage(reason));
+            setError(`We couldn't confirm the payment yet. Check My Learning before trying again. ${errorMessage(reason)}`);
             setBusy(false);
           }
         },
         modal: { ondismiss: () => setBusy(false) }
+      });
+      checkout.on("payment.failed", (response) => {
+        const description = response.error?.description;
+        setError(description
+          ? `Payment failed: ${description}. You can try again.`
+          : "Payment failed. You can try again.");
+        setBusy(false);
       });
       checkout.open();
     } catch (reason) {

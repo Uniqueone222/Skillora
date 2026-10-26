@@ -37,27 +37,33 @@ export async function createCourseOrder(userId, courseId) {
     provider: "razorpay",
     status: "pending"
   });
+  let order;
   try {
-    const order = await razorpay.orders.create({
+    order = await razorpay.orders.create({
       amount: course.pricePaise,
       currency: "INR",
       receipt: transaction._id.toString(),
       notes: { transactionId: transaction._id.toString(), courseId: course._id.toString() }
     });
-    transaction.providerOrderId = order.id;
-    await transaction.save();
-    return {
-      keyId: env.RAZORPAY_KEY_ID,
-      orderId: order.id,
-      amount: course.pricePaise,
-      currency: "INR",
-      transactionId: transaction._id
-    };
   } catch (error) {
     transaction.status = "failed";
     await transaction.save();
-    throw error;
+    console.error("Razorpay order creation failed", {
+      statusCode: error.statusCode,
+      code: error.error?.code ?? error.code
+    });
+    throw new ApiError(502, "Razorpay could not create the payment order; please try again");
   }
+
+  transaction.providerOrderId = order.id;
+  await transaction.save();
+  return {
+    keyId: env.RAZORPAY_KEY_ID,
+    orderId: order.id,
+    amount: course.pricePaise,
+    currency: "INR",
+    transactionId: transaction._id
+  };
 }
 
 export async function verifyCoursePayment(userId, { orderId, paymentId, signature }) {
@@ -66,13 +72,11 @@ export async function verifyCoursePayment(userId, { orderId, paymentId, signatur
   if (!verifyHmac(`${orderId}|${paymentId}`, signature, env.RAZORPAY_KEY_SECRET)) {
     throw new ApiError(400, "Payment signature is invalid");
   }
-  const payment = await getRazorpay().payments.fetch(paymentId);
-  if (payment.order_id !== orderId
-      || payment.amount !== transaction.grossAmountPaise
-      || payment.currency !== transaction.currency
-      || payment.status !== "captured") {
-    throw new ApiError(409, "Payment has not been captured for the expected order and amount");
-  }
+  const payment = await captureIfAuthorizedPayment(getRazorpay(), paymentId, {
+    orderId,
+    amount: transaction.grossAmountPaise,
+    currency: transaction.currency
+  });
   if (transaction.providerPaymentId && transaction.providerPaymentId !== paymentId) {
     throw new ApiError(409, "A different payment is already linked to this purchase");
   }
@@ -81,6 +85,46 @@ export async function verifyCoursePayment(userId, { orderId, paymentId, signatur
   transaction.paidAt ??= new Date();
   await transaction.save();
   return fulfill(transaction);
+}
+
+export async function captureIfAuthorizedPayment(razorpay, paymentId, expected) {
+  let payment;
+  try {
+    payment = await razorpay.payments.fetch(paymentId);
+  } catch (error) {
+    logProviderFailure("Razorpay payment verification request failed", error);
+    throw new ApiError(502, "Razorpay could not verify this payment; please try again");
+  }
+
+  if (payment.order_id !== expected.orderId
+      || payment.amount !== expected.amount
+      || payment.currency !== expected.currency) {
+    throw new ApiError(409, "Payment does not match the expected order and amount");
+  }
+
+  if (payment.status === "authorized") {
+    try {
+      payment = await razorpay.payments.capture(paymentId, expected.amount, expected.currency);
+    } catch (error) {
+      try {
+        payment = await razorpay.payments.fetch(paymentId);
+      } catch (fetchError) {
+        logProviderFailure("Razorpay payment status recheck failed", fetchError);
+        throw new ApiError(502, "Razorpay could not confirm this payment capture; please try again");
+      }
+      if (payment.status !== "captured") {
+        logProviderFailure("Razorpay payment capture failed", error);
+      }
+    }
+  }
+
+  if (payment.status !== "captured"
+      || payment.order_id !== expected.orderId
+      || payment.amount !== expected.amount
+      || payment.currency !== expected.currency) {
+    throw new ApiError(409, "Payment has not been captured for the expected order and amount");
+  }
+  return payment;
 }
 
 export async function verifyWebhook(rawBody, signature) {
@@ -125,6 +169,13 @@ export async function verifyWebhook(rawBody, signature) {
     }
   }
   return { received: true };
+}
+
+function logProviderFailure(message, error) {
+  console.error(message, {
+    statusCode: error.statusCode,
+    code: error.error?.code ?? error.code
+  });
 }
 
 async function fulfill(transaction) {

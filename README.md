@@ -43,7 +43,7 @@ backend/src/middlewares/ Authentication, authorization, validation, errors
 2. Copy `backend/.env.example` to `backend/.env`; set `MONGODB_URI`, a unique random `JWT_ACCESS_SECRET` of at least 32 characters, and `CLIENT_URL`.
 3. Optionally set `ADMIN_EMAILS` to comma-separated addresses. Accounts registered with those addresses receive the admin role; users cannot assign themselves admin.
 4. To enable video uploads, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`. Configure all three or leave all three blank. Never expose the API secret in frontend environment variables. Videos upload directly from the browser to Cloudinary; the backend signs upload requests and verifies provider metadata before attaching a lesson.
-5. To test paid checkout, configure Razorpay **test** key ID (`rzp_test_...`), key secret, and webhook secret. The server rejects live-mode key IDs. Never put the key secret in frontend environment variables.
+5. To test paid checkout, configure Razorpay **test** key ID (`rzp_test_...`) and matching key secret. These two credentials enable checkout; the server rejects live-mode key IDs. Never put the key secret in frontend environment variables. A webhook secret is separate and optional for checkout.
 6. Install frontend dependencies: `npm --prefix frontend install`
 7. Copy `frontend/.env.example` to `frontend/.env` if the API is not at `http://localhost:5000/api`.
 8. Run `npm run dev:api` and `npm run dev:web` in separate terminals.
@@ -52,7 +52,9 @@ The API validates required configuration and connects to MongoDB before it start
 
 ## Payment and access integrity
 
-Educators set the course price while authoring; the backend stores integer INR paise. On checkout, the server reads the published course and creates the Razorpay order for that stored amount—it ignores client-supplied prices. The browser callback is not treated as proof: the backend verifies the HMAC signature and fetches the payment from Razorpay, checking captured status, order, currency, and amount. Signed webhooks are also supported. Enrollment creation is idempotent and protected by a unique learner/course index. No platform commission is applied because a rate has not been decided.
+Educators set the course price while authoring; the backend stores integer INR paise. On checkout, the server reads the published course and creates the Razorpay order for that stored amount—it ignores client-supplied prices. The browser callback is not treated as proof: the backend verifies the HMAC signature and fetches the payment from Razorpay, checking order, currency, and amount. If the verified payment is only authorized, the backend captures it server-side before granting access. This browser verification flow works with the key ID and key secret and does not require a webhook secret. Signed webhooks are an additional server-to-server fulfillment path. Enrollment creation is idempotent and protected by a unique learner/course index. No platform commission is applied because a rate has not been decided.
+
+To enable webhooks, deploy the API to a publicly reachable HTTPS URL, add `https://YOUR_API_HOST/api/payments/webhook` in the Razorpay Dashboard under **Account & Settings → Webhooks**, and subscribe to `payment.captured` and `payment.failed`. Set a webhook secret in the dashboard, copy that exact value to `RAZORPAY_WEBHOOK_SECRET` in the backend environment, and restart the backend. This webhook secret is chosen/configured separately from the API key secret. Keep the endpoint secret server-side. Localhost cannot receive Razorpay dashboard webhooks without a secure public tunnel; checkout testing can proceed without webhooks.
 
 The client receives paid lesson metadata only after an enrollment check. The backend checks enrollment (or preview status/course ownership) again before issuing each signed playback URL; the frontend does not enforce entitlement by hiding a route. Cloudinary Free signed URLs remain shareable bearer links and are not time-limited.
 
@@ -78,7 +80,7 @@ npm run build
 - `/api/educators` — activation, public profile, profile editing, educator course list
 - `/api/courses` — public discovery (`sort=newest|rating|enrollments`), reviews (`GET/POST/PUT /:courseId/reviews`), educator drafts, modules/lessons, submission, protected learning content and progress
 - `/api/enrollments` — learner course library
-- `/api/payments` — Razorpay test order, verification, signed webhook
+- `/api/payments` — Razorpay test order and payment verification; optional signed webhook at `/webhook`
 - `/api/communities` — course/educator community lookup, access settings, discussions and answers
 - `/api/conversations` — persisted direct messages
 - `/api/admin` — skill and course moderation
@@ -89,6 +91,6 @@ npm run build
 - Cloudinary Free signed playback URLs can be shared and do not expire; use a paid token-based access feature or another provider if per-viewer/time-limited protection is required.
 - An upload interrupted after Cloudinary accepts the file but before the backend attaches it can leave an unattached asset; remove such abandoned uploads from Cloudinary's Media Library.
 - Messaging is REST-based; real-time delivery and Socket.IO are deferred.
-- Razorpay accepts test credentials only. Production payment onboarding, refunds, payouts, and platform-fee policy are not implemented.
+- Razorpay accepts test credentials only. Webhooks are inactive until a webhook secret is configured. Production payment onboarding, refunds, payouts, and platform-fee policy are not implemented.
 - Course prices use INR. Mentorship booking and other future-phase features are not included.
 - No deployment or demo URLs have been configured.

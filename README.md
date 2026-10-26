@@ -6,6 +6,10 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 
 Visit [Skillora](https://skillora-bay.vercel.app/).
 
+## Demo video
+
+Watch the [Skillora project demo](https://drive.google.com/file/d/16K0SXoa9T4-PlyuzfIZrTCGUiA_MEY1k/view?usp=sharing).
+
 ## Problem statement
 
 Learners often have to search across disconnected course platforms to find a skill, compare educators, and get help while learning. Independent educators need a straightforward way to publish expertise and reach learners.

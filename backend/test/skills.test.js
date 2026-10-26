@@ -35,6 +35,15 @@ test("skill suggestion input rejects malformed or unexpected fields", () => {
   }).success, false);
 });
 
+test("pending skill requests enforce normalized-name uniqueness with one partial index", () => {
+  const normalizedNameIndexes = SkillRequest.schema.indexes()
+    .filter(([fields]) => Object.keys(fields).length === 1 && fields.normalizedName === 1);
+
+  assert.equal(normalizedNameIndexes.length, 1);
+  assert.equal(normalizedNameIndexes[0][1].unique, true);
+  assert.deepEqual(normalizedNameIndexes[0][1].partialFilterExpression, { status: "pending" });
+});
+
 test("skill discovery searches names and descriptions within a category", async (context) => {
   let filter;
   let limit;

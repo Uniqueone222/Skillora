@@ -173,8 +173,7 @@ test("approving a skill request creates and links a catalogue skill", async (con
 test("course discovery applies category, description search, difficulty, and price filters", async (context) => {
   const skillId = new mongoose.Types.ObjectId();
   let skillFilter;
-  let courseFilter;
-  let resultLimit;
+  let pipeline;
   replaceMethod(context, Skill, "find", (filter) => {
     skillFilter = filter;
     return {
@@ -184,18 +183,8 @@ test("course discovery applies category, description search, difficulty, and pri
       }
     };
   });
-  replaceMethod(context, Course, "find", (filter) => {
-    courseFilter = filter;
-    return {
-      select() { return this; },
-      populate() { return this; },
-      sort() { return this; },
-      limit(value) {
-        resultLimit = value;
-        return [];
-      }
-    };
-  });
+  replaceMethod(context, Course, "aggregate", async (value) => { pipeline = value; return []; });
+  replaceMethod(context, Course, "populate", async (courses) => courses);
 
   await listPublishedCourses({
     category: "Creative",
@@ -206,11 +195,17 @@ test("course discovery applies category, description search, difficulty, and pri
   });
 
   assert.deepEqual(skillFilter, { category: "Creative", status: "approved" });
-  assert.deepEqual(courseFilter.skillId, { $in: [skillId] });
-  assert.equal(courseFilter.status, "published");
-  assert.equal(courseFilter.$or[0].title.$regex, "Clay\\.\\*");
-  assert.deepEqual(courseFilter.$or[0], { title: courseFilter.$or[1].description });
-  assert.equal(courseFilter.difficulty, "beginner");
-  assert.deepEqual(courseFilter.pricePaise, { $gt: 0 });
-  assert.equal(resultLimit, 8);
+  const filter = pipeline[0].$match;
+  assert.deepEqual(filter.skillId, { $in: [skillId] });
+  assert.equal(filter.status, "published");
+  assert.equal(filter.$or[0].title.$regex, "Clay\\.\\*");
+  assert.deepEqual(filter.$or[0], { title: filter.$or[1].description });
+  assert.equal(filter.difficulty, "beginner");
+  assert.deepEqual(filter.pricePaise, { $gt: 0 });
+  assert.deepEqual(pipeline[4].$sort, { publishedAt: -1 });
+  assert.deepEqual(pipeline[5], { $limit: 8 });
+
+  await listPublishedCourses({ skillId: skillId.toString(), educatorId: skillId.toString() });
+  assert.equal(pipeline[0].$match.skillId.toString(), skillId.toString());
+  assert.equal(pipeline[0].$match.educatorId.toString(), skillId.toString());
 });

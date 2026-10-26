@@ -131,6 +131,8 @@ p { line-height: 1.7; }
 .course-card-body { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding: 17px; }
 .course-card-body > strong { margin-top: 7px; font: 700 15px/1.4 "Segoe UI", Arial, sans-serif; }
 .course-card-body > .muted { margin-top: 7px; font-size: 10px; }
+.course-card-rating { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; color: #777e91; font-size: 9px; }
+.course-card-rating span:first-child, .course-review-summary, .review-card-heading span { color: #a06a16; font-weight: 700; }
 .course-card-foot { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 21px; padding-top: 13px; border-top: 1px solid #eff0f4; color: #252b3d; font-size: 11px; font-weight: 700; }
 .course-card-foot span:last-child { color: var(--violet-dark); font-size: 9px; }
 
@@ -226,6 +228,21 @@ p { line-height: 1.7; }
 .purchase-checks li::marker { color: #74bf9e; }
 .purchase-message { margin-top: 14px; }
 .purchase-card .fine-print { margin-top: 13px; }
+.course-reviews { max-width: 850px; margin-top: 64px; }
+.course-reviews .section-heading { align-items: flex-end; }
+.course-reviews h2 { margin: 7px 0 0; font-size: 25px; }
+.course-review-summary { padding-bottom: 4px; font-size: 12px; }
+.review-form { display: grid; gap: 13px; max-width: 620px; padding: 20px; margin: 22px 0; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.review-form h3 { margin: 0; font-size: 15px; }
+.review-form label { display: grid; gap: 7px; color: #646b7d; font-size: 10px; font-weight: 700; }
+.review-form select, .review-form textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font: inherit; }
+.review-form textarea { resize: vertical; }
+.review-form .button { justify-self: start; }
+.review-list { display: grid; gap: 12px; margin-top: 20px; }
+.review-card { padding: 17px 19px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.review-card-heading { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; }
+.review-card p { margin: 12px 0; color: #60687b; font-size: 11px; line-height: 1.7; white-space: pre-wrap; }
+.review-card time { color: #9298a6; font-size: 9px; }
 
 .dashboard-welcome { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 29px 34px; margin-bottom: 52px; border-radius: 16px; background: linear-gradient(110deg, #f4f3ff, #f8f9ff); }
 .dashboard-welcome h1 { margin: 8px 0 7px; font-size: 32px; }

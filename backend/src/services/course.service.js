@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import Course from "../models/course.model.js";
 import Skill from "../models/skill.model.js";
 import Community from "../models/community.model.js";
 import Enrollment from "../models/enrollment.model.js";
+import CourseReview from "../models/courseReview.model.js";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/ApiError.js";
 import { slugify } from "../utils/normalizeSkill.js";
@@ -226,10 +228,19 @@ export async function reviewCourse(adminId, courseId, { status, rejectionReason 
   return course;
 }
 
-export async function listPublishedCourses({ skillId, educatorId, category, search, difficulty, price, limit = 30 }) {
+export async function listPublishedCourses({
+  skillId,
+  educatorId,
+  category,
+  search,
+  difficulty,
+  price,
+  sort = "newest",
+  limit = 30
+}) {
   const filter = { status: "published" };
-  if (skillId) filter.skillId = skillId;
-  if (educatorId) filter.educatorId = educatorId;
+  if (skillId) filter.skillId = new mongoose.Types.ObjectId(skillId);
+  if (educatorId) filter.educatorId = new mongoose.Types.ObjectId(educatorId);
   if (category && !skillId) {
     const skills = await Skill.find({ category, status: "approved" }).select("_id");
     filter.skillId = { $in: skills.map((skill) => skill._id) };
@@ -241,8 +252,51 @@ export async function listPublishedCourses({ skillId, educatorId, category, sear
   if (difficulty) filter.difficulty = difficulty;
   if (price === "free") filter.pricePaise = 0;
   if (price === "paid") filter.pricePaise = { $gt: 0 };
-  return Course.find(filter).select("-modules").populate("skillId", "name slug")
-    .populate("educatorId", "name").sort({ publishedAt: -1 }).limit(Math.min(Number(limit) || 30, 100));
+
+  const sortBy = {
+    newest: { publishedAt: -1 },
+    rating: { ratingAverage: -1, reviewCount: -1, publishedAt: -1 },
+    enrollments: { enrollmentCount: -1, publishedAt: -1 }
+  }[sort] || { publishedAt: -1 };
+  const courses = await Course.aggregate([
+    { $match: filter },
+    {
+      $lookup: {
+        from: CourseReview.collection.name,
+        let: { courseId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+          { $group: { _id: null, average: { $avg: "$rating" }, count: { $sum: 1 } } }
+        ],
+        as: "reviewStats"
+      }
+    },
+    {
+      $lookup: {
+        from: Enrollment.collection.name,
+        let: { courseId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+          { $count: "count" }
+        ],
+        as: "enrollmentStats"
+      }
+    },
+    {
+      $addFields: {
+        ratingAverage: { $ifNull: [{ $arrayElemAt: ["$reviewStats.average", 0] }, 0] },
+        reviewCount: { $ifNull: [{ $arrayElemAt: ["$reviewStats.count", 0] }, 0] },
+        enrollmentCount: { $ifNull: [{ $arrayElemAt: ["$enrollmentStats.count", 0] }, 0] }
+      }
+    },
+    { $sort: sortBy },
+    { $limit: Math.min(Number(limit) || 30, 100) },
+    { $project: { modules: 0, reviewStats: 0, enrollmentStats: 0 } }
+  ]);
+  return Course.populate(courses, [
+    { path: "skillId", select: "name slug" },
+    { path: "educatorId", select: "name" }
+  ]);
 }
 
 export async function getPublicCourse(courseId) {
@@ -251,7 +305,87 @@ export async function getPublicCourse(courseId) {
     .populate("skillId", "name slug")
     .populate("educatorId", "name");
   if (!course) throw new ApiError(404, "Course not found");
-  return course;
+  const [reviewStats, enrollmentCount] = await Promise.all([
+    CourseReview.aggregate([
+      { $match: { courseId: course._id } },
+      { $group: { _id: null, ratingAverage: { $avg: "$rating" }, reviewCount: { $sum: 1 } } }
+    ]),
+    Enrollment.countDocuments({ courseId: course._id })
+  ]);
+  return {
+    ...course.toObject(),
+    ratingAverage: reviewStats[0]?.ratingAverage ?? 0,
+    reviewCount: reviewStats[0]?.reviewCount ?? 0,
+    enrollmentCount
+  };
+}
+
+export async function listCourseReviews(courseId, userId) {
+  const course = await Course.findOne({ _id: courseId, status: "published" }).select("_id educatorId");
+  if (!course) throw new ApiError(404, "Course not found");
+
+  const [summary, reviews, enrollment, userReview] = await Promise.all([
+    CourseReview.aggregate([
+      { $match: { courseId: course._id } },
+      { $group: { _id: null, ratingAverage: { $avg: "$rating" }, reviewCount: { $sum: 1 } } }
+    ]),
+    CourseReview.find({ courseId: course._id })
+      .select("learnerId rating body createdAt updatedAt")
+      .populate("learnerId", "name")
+      .sort({ createdAt: -1 })
+      .limit(100),
+    userId && String(course.educatorId) !== String(userId)
+      ? Enrollment.exists({ learnerId: userId, courseId: course._id })
+      : null,
+    userId
+      ? CourseReview.findOne({ courseId: course._id, learnerId: userId })
+      : null
+  ]);
+
+  return {
+    ratingAverage: summary[0]?.ratingAverage ?? 0,
+    reviewCount: summary[0]?.reviewCount ?? 0,
+    reviews,
+    canReview: Boolean(enrollment),
+    userReview
+  };
+}
+
+export async function createCourseReview(learnerId, courseId, { rating, body }) {
+  const course = await Course.findOne({ _id: courseId, status: "published" }).select("_id educatorId");
+  if (!course) throw new ApiError(404, "Course not found");
+  if (String(course.educatorId) === String(learnerId)) {
+    throw new ApiError(403, "Educators cannot review their own course");
+  }
+  if (!(await Enrollment.exists({ learnerId, courseId: course._id }))) {
+    throw new ApiError(403, "An active enrollment is required to review this course");
+  }
+
+  try {
+    return await CourseReview.create({ courseId: course._id, learnerId, rating, body });
+  } catch (error) {
+    if (error.code === 11000) throw new ApiError(409, "You have already reviewed this course");
+    throw error;
+  }
+}
+
+export async function updateCourseReview(learnerId, courseId, { rating, body }) {
+  const course = await Course.findOne({ _id: courseId, status: "published" }).select("_id educatorId");
+  if (!course) throw new ApiError(404, "Course not found");
+  if (String(course.educatorId) === String(learnerId)) {
+    throw new ApiError(403, "Educators cannot review their own course");
+  }
+  if (!(await Enrollment.exists({ learnerId, courseId: course._id }))) {
+    throw new ApiError(403, "An active enrollment is required to review this course");
+  }
+
+  const review = await CourseReview.findOneAndUpdate(
+    { courseId: course._id, learnerId },
+    { $set: { rating, body } },
+    { new: true, runValidators: true }
+  );
+  if (!review) throw new ApiError(404, "Your course review was not found");
+  return review;
 }
 
 export async function getLearningContent(userId, courseId) {

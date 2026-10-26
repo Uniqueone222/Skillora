@@ -76,6 +76,18 @@ export const lessonVideoSchema = z.object({
   params: lessonVideoParams
 });
 
+export const courseReviewParamsSchema = z.object({
+  params: z.object({ courseId: objectId })
+});
+
+export const courseReviewSchema = z.object({
+  params: z.object({ courseId: objectId }),
+  body: z.object({
+    rating: z.number().int().min(1).max(5),
+    body: z.string().trim().min(10).max(2000)
+  }).strict()
+});
+
 export const updateModuleSchema = z.object({
   params: z.object({ courseId: objectId, moduleId: objectId }),
   body: z.object({

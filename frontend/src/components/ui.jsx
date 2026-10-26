@@ -43,6 +43,10 @@ export function CourseCard({ course }) {
         <span className="eyebrow">{course.difficulty || "All levels"}</span>
         <strong>{course.title}</strong>
         <span className="muted">with {course.educatorId?.name || "Independent educator"}</span>
+        <span className="course-card-rating">
+          <span aria-label={`${Number(course.ratingAverage || 0).toFixed(1)} out of 5`}>★ {Number(course.ratingAverage || 0).toFixed(1)}</span>
+          <span>{course.reviewCount || 0} reviews · {course.enrollmentCount || 0} learners</span>
+        </span>
         <div className="course-card-foot"><span>{course.pricePaise === 0 ? "Free" : formatINR(course.pricePaise)}</span><span>View course ↗</span></div>
       </div>
     </a>

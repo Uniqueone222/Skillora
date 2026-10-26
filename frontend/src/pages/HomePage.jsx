@@ -14,6 +14,7 @@ export default function HomePage() {
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [price, setPrice] = useState("");
+  const [sort, setSort] = useState("newest");
   const [skillName, setSkillName] = useState("");
   const [skillDescription, setSkillDescription] = useState("");
   const [notice, setNotice] = useState("");
@@ -25,7 +26,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setLoading(true);
-    const courseFilters = new URLSearchParams({ search: query, limit: "6" });
+    const courseFilters = new URLSearchParams({ search: query, limit: "6", sort });
     if (category) courseFilters.set("category", category);
     if (difficulty) courseFilters.set("difficulty", difficulty);
     if (price) courseFilters.set("price", price);
@@ -40,7 +41,7 @@ export default function HomePage() {
       setError("");
     }).catch((reason) => setError(errorMessage(reason)))
       .finally(() => setLoading(false));
-  }, [query, category, difficulty, price]);
+  }, [query, category, difficulty, price, sort]);
 
   async function suggestSkill(event) {
     event.preventDefault();
@@ -143,6 +144,13 @@ export default function HomePage() {
                 <option value="">Any price</option>
                 <option value="free">Free</option>
                 <option value="paid">Paid</option>
+              </select>
+            </label>
+            <label>Sort by
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                <option value="newest">Newest</option>
+                <option value="rating">Highest rated</option>
+                <option value="enrollments">Most learners</option>
               </select>
             </label>
           </div>

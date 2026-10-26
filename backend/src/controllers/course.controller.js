@@ -11,6 +11,32 @@ export const get = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { course } });
 });
 
+export const listReviews = asyncHandler(async (req, res) => {
+  const result = await courseService.listCourseReviews(
+    req.validated.params.courseId,
+    req.user?._id
+  );
+  res.json({ success: true, data: result });
+});
+
+export const createReview = asyncHandler(async (req, res) => {
+  const review = await courseService.createCourseReview(
+    req.user._id,
+    req.validated.params.courseId,
+    req.validated.body
+  );
+  res.status(201).json({ success: true, data: { review } });
+});
+
+export const updateReview = asyncHandler(async (req, res) => {
+  const review = await courseService.updateCourseReview(
+    req.user._id,
+    req.validated.params.courseId,
+    req.validated.body
+  );
+  res.json({ success: true, data: { review } });
+});
+
 export const create = asyncHandler(async (req, res) => {
   const result = await courseService.createDraft(req.user._id, req.validated.body);
   res.status(201).json({ success: true, data: result });

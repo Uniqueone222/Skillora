@@ -10,14 +10,15 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 - Course submission and admin publication approval.
 - Course purchase with Razorpay **test-mode only**, free enrollment, server-verified payment fulfillment, protected learning-content access, and saved lesson progress.
 - Educator uploads of MP4/WebM videos (up to 100 MB) directly to Cloudinary as authenticated media; playback URLs are signed server-side after preview, enrollment, or course-owner checks.
+- Enrolled learners can leave one 1–5 star review per published course and edit it later; discovery sorts courses by newest, rating, or enrollment count.
 - Separate course and educator communities with backend-enforced access settings, discussions, answers, and resolution.
 - Persisted REST direct messaging, controlled by each educator's messaging setting.
 
-Cloudinary credentials are optional for app startup; video upload/playback returns a configuration error until they are set. Cloudinary Free authenticated signed URLs are bearer links: anyone who obtains a playback URL can share it, and the URL does not expire. This MVP gates URL issuance by lesson preview/enrollment and does not provide per-viewer or short-lived playback tokens. Mentorship bookings, Socket.IO/live chat, reviews, notifications, subscriptions, teams, and analytics are deferred.
+Cloudinary credentials are optional for app startup; video upload/playback returns a configuration error until they are set. Cloudinary Free authenticated signed URLs are bearer links: anyone who obtains a playback URL can share it, and the URL does not expire. This MVP gates URL issuance by lesson preview/enrollment and does not provide per-viewer or short-lived playback tokens. Mentorship bookings, Socket.IO/live chat, notifications, subscriptions, teams, and analytics are deferred.
 
 ## Architecture
 
-This is a JavaScript MERN modular monolith. The Express backend keeps the required top-level `apis/`, `controllers/`, `models/`, and `middlewares/` folders. Domain services own business rules. Course modules and lessons are embedded subdocuments; votes, enrollments, payment transactions, communities, discussions, conversations, and messages remain separate records where independent access, uniqueness, or lifecycle rules matter.
+This is a JavaScript MERN modular monolith. The Express backend keeps the required top-level `apis/`, `controllers/`, `models/`, and `middlewares/` folders. Domain services own business rules. Course modules and lessons are embedded subdocuments; votes, enrollments, reviews, payment transactions, communities, discussions, conversations, and messages remain separate records where independent access, uniqueness, or lifecycle rules matter.
 
 ```text
 frontend/                 React + Vite
@@ -53,6 +54,12 @@ Educators set the course price while authoring; the backend stores integer INR p
 
 The client receives paid lesson metadata only after an enrollment check. The backend checks enrollment (or preview status/course ownership) again before issuing each signed playback URL; the frontend does not enforce entitlement by hiding a route. Cloudinary Free signed URLs remain shareable bearer links and are not time-limited.
 
+## Course reviews and discovery
+
+Only a learner enrolled in a published course may submit a review. Each learner can have one review per course and may edit it; course educators cannot review their own courses. Ratings are integers from 1 to 5, and review text must be 10–2,000 characters. Course pages show the average rating, review count, enrollment count, and up to the 100 most recent reviews.
+
+Course discovery accepts `sort=newest` (default), `sort=rating`, or `sort=enrollments`. Rating order uses average rating, then review count, then publication date. Enrollment order uses the number of unique enrollment records, then publication date; this is an enrollment-based popularity measure, not a view count. Both calculated metrics are applied before the result limit.
+
 ## Validation
 
 ```text
@@ -67,7 +74,7 @@ npm run build
 - `/api/auth` — register, login, logout, current user
 - `/api/skills` — approved skill catalogue, requests, votes, skill courses
 - `/api/educators` — activation, public profile, profile editing, educator course list
-- `/api/courses` — public discovery, educator drafts, modules/lessons, submission, protected learning content and progress
+- `/api/courses` — public discovery (`sort=newest|rating|enrollments`), reviews (`GET/POST/PUT /:courseId/reviews`), educator drafts, modules/lessons, submission, protected learning content and progress
 - `/api/enrollments` — learner course library
 - `/api/payments` — Razorpay test order, verification, signed webhook
 - `/api/communities` — course/educator community lookup, access settings, discussions and answers

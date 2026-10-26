@@ -2,13 +2,15 @@ import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import * as controller from "../controllers/course.controller.js";
 import * as enrollmentController from "../controllers/enrollment.controller.js";
-import { authenticate } from "../middlewares/authenticate.middleware.js";
+import { authenticate, optionalAuthenticate } from "../middlewares/authenticate.middleware.js";
 import { requireCapability } from "../middlewares/authorize.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { idParamSchema, courseQuerySchema } from "../validators/query.validator.js";
 import {
   createCourseSchema,
   updateCourseSchema,
+  courseReviewParamsSchema,
+  courseReviewSchema,
   moduleSchema,
   lessonSchema,
   updateModuleSchema,
@@ -28,9 +30,20 @@ const videoUploadLimiter = rateLimit({
   keyGenerator: (req) => String(req.user._id),
   message: { success: false, message: "Too many video upload authorizations; try again later" }
 });
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.user._id),
+  message: { success: false, message: "Too many review submissions; try again later" }
+});
 
 router.get("/", validate(courseQuerySchema), controller.list);
 router.get("/mine", authenticate, requireCapability("educator"), controller.myCourses);
+router.get("/:courseId/reviews", optionalAuthenticate, validate(courseReviewParamsSchema), controller.listReviews);
+router.post("/:courseId/reviews", authenticate, reviewLimiter, validate(courseReviewSchema), controller.createReview);
+router.put("/:courseId/reviews", authenticate, reviewLimiter, validate(courseReviewSchema), controller.updateReview);
 router.post("/", authenticate, requireCapability("educator"), validate(createCourseSchema), controller.create);
 router.post("/:courseId/enroll", authenticate, validate(idParamSchema("courseId")), enrollmentController.enrollFree);
 router.get("/:courseId/learning-content", authenticate, validate(idParamSchema("courseId")), controller.learningContent);

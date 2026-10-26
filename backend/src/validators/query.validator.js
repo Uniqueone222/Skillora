@@ -18,6 +18,7 @@ export const courseQuerySchema = z.object({
     search: z.string().trim().max(160).optional(),
     difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
     price: z.enum(["free", "paid"]).optional(),
+    sort: z.enum(["newest", "rating", "enrollments"]).default("newest"),
     limit: z.coerce.number().int().min(1).max(100).optional()
   })
 });

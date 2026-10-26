@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { registerSchema } from "../src/validators/auth.validator.js";
-import { createCourseSchema } from "../src/validators/courses.validator.js";
+import { createCourseSchema, courseReviewSchema } from "../src/validators/courses.validator.js";
 import { courseQuerySchema } from "../src/validators/query.validator.js";
 
 test("registration rejects short passwords and unknown fields", () => {
@@ -45,4 +45,22 @@ test("course discovery filters validate supported levels and price modes", () =>
   assert.equal(courseQuerySchema.safeParse({
     query: { difficulty: "expert", price: "discount" }
   }).success, false);
+});
+
+test("course review and discovery sort inputs are constrained", () => {
+  const courseId = "0123456789abcdef01234567";
+  assert.equal(courseReviewSchema.safeParse({
+    params: { courseId },
+    body: { rating: 5, body: "Clear and practical lessons." }
+  }).success, true);
+  assert.equal(courseReviewSchema.safeParse({
+    params: { courseId },
+    body: { rating: 6, body: "Clear and practical lessons." }
+  }).success, false);
+  assert.equal(courseReviewSchema.safeParse({
+    params: { courseId },
+    body: { rating: 4, body: "Short" }
+  }).success, false);
+  assert.equal(courseQuerySchema.safeParse({ query: { sort: "rating" } }).success, true);
+  assert.equal(courseQuerySchema.safeParse({ query: { sort: "views" } }).success, false);
 });

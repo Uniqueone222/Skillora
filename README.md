@@ -5,7 +5,7 @@ Skillora is a skill-first learning marketplace: learners start with a skill, com
 ## MVP workflows
 
 - Email registration/login and educator activation on the same account.
-- Approved-skill discovery plus learner skill requests, one-vote-per-user, and admin moderation.
+- Approved-skill discovery with skill/course description search, category, course-level and price filters; learner skill requests and one-vote-per-user moderation.
 - Educator profile and course authoring; modules and lessons are embedded in the course record.
 - Course submission and admin publication approval.
 - Course purchase with Razorpay **test-mode only**, free enrollment, server-verified payment fulfillment, protected learning-content access, and saved lesson progress.
@@ -79,4 +79,3 @@ npm run build
 - Razorpay accepts test credentials only. Production payment onboarding, refunds, payouts, and platform-fee policy are not implemented.
 - Course prices use INR. Mentorship booking and other future-phase features are not included.
 - No deployment or demo URLs have been configured.
-

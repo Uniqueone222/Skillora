@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import * as controller from "../controllers/skill.controller.js";
-import { authenticate } from "../middlewares/authenticate.middleware.js";
+import { authenticate, optionalAuthenticate } from "../middlewares/authenticate.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
   idParamSchema,
@@ -19,7 +19,7 @@ const votingLimiter = rateLimit({
   legacyHeaders: false
 });
 router.get("/", validate(skillQuerySchema), controller.list);
-router.get("/requests", controller.listRequests);
+router.get("/requests", optionalAuthenticate, controller.listRequests);
 router.get("/:slug/courses", validate(skillCoursesQuerySchema), controller.courses);
 router.get("/:slug", validate(slugParamSchema), controller.get);
 router.post("/requests", votingLimiter, authenticate, validate(skillRequestSchema), controller.createRequest);

@@ -4,13 +4,11 @@ import { env } from "../config/env.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const authenticate = asyncHandler(async (req, res, next) => {
+async function getAuthenticatedUser(req) {
   const token = req.cookies?.skillora_token
     ?? req.get("authorization")?.replace(/^Bearer\s+/i, "");
 
-  if (!token) {
-    throw new ApiError(401, "Authentication required");
-  }
+  if (!token) return null;
 
   let payload;
   try {
@@ -24,6 +22,17 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Session user no longer exists");
   }
 
+  return user;
+}
+
+export const authenticate = asyncHandler(async (req, res, next) => {
+  const user = await getAuthenticatedUser(req);
+  if (!user) throw new ApiError(401, "Authentication required");
   req.user = user;
+  next();
+});
+
+export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
+  req.user = await getAuthenticatedUser(req);
   next();
 });

@@ -27,7 +27,7 @@ export const createRequest = asyncHandler(async (req, res) => {
 });
 
 export const listRequests = asyncHandler(async (req, res) => {
-  const requests = await skillService.listRequests();
+  const requests = await skillService.listRequests(req.user?._id);
   res.json({ success: true, data: { requests } });
 });
 

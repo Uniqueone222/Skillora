@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { registerSchema } from "../src/validators/auth.validator.js";
 import { createCourseSchema } from "../src/validators/courses.validator.js";
+import { courseQuerySchema } from "../src/validators/query.validator.js";
 
 test("registration rejects short passwords and unknown fields", () => {
   assert.equal(registerSchema.safeParse({
@@ -29,5 +30,19 @@ test("course creation requires server-compatible integer paise values", () => {
   assert.equal(createCourseSchema.safeParse({
     ...input,
     body: { ...input.body, status: "published" }
+  }).success, false);
+});
+
+test("course discovery filters validate supported levels and price modes", () => {
+  assert.equal(courseQuerySchema.safeParse({
+    query: {
+      category: "Creative",
+      difficulty: "intermediate",
+      price: "free",
+      limit: "6"
+    }
+  }).success, true);
+  assert.equal(courseQuerySchema.safeParse({
+    query: { difficulty: "expert", price: "discount" }
   }).success, false);
 });

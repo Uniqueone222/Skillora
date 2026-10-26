@@ -14,7 +14,10 @@ export const courseQuerySchema = z.object({
   query: z.object({
     skillId: objectId.optional(),
     educatorId: objectId.optional(),
+    category: z.string().trim().min(1).max(80).optional(),
     search: z.string().trim().max(160).optional(),
+    difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    price: z.enum(["free", "paid"]).optional(),
     limit: z.coerce.number().int().min(1).max(100).optional()
   })
 });

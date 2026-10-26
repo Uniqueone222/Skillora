@@ -7,7 +7,10 @@ import { normalizeSkillName, slugify } from "../utils/normalizeSkill.js";
 export async function listSkills({ search, category, limit = 30 }) {
   const filter = { status: "approved" };
   if (category) filter.category = category;
-  if (search) filter.name = { $regex: escapeRegex(search.trim()), $options: "i" };
+  if (search) {
+    const expression = { $regex: escapeRegex(search.trim()), $options: "i" };
+    filter.$or = [{ name: expression }, { description: expression }];
+  }
   return Skill.find(filter).sort({ name: 1 }).limit(Math.min(Number(limit) || 30, 100));
 }
 
@@ -17,11 +20,16 @@ export async function getSkill(slug) {
   return skill;
 }
 
-export async function listRequests() {
+export async function listRequests(userId) {
   return SkillRequest.aggregate([
     { $match: { status: "pending" } },
     { $lookup: { from: "skillvotes", localField: "_id", foreignField: "skillRequestId", as: "votes" } },
-    { $addFields: { voteCount: { $size: "$votes" } } },
+    {
+      $addFields: {
+        voteCount: { $size: "$votes" },
+        hasVoted: userId ? { $in: [userId, "$votes.userId"] } : false
+      }
+    },
     { $project: { votes: 0 } },
     { $sort: { voteCount: -1, createdAt: 1 } },
     { $limit: 100 }

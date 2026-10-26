@@ -12,18 +12,26 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [price, setPrice] = useState("");
   const [skillName, setSkillName] = useState("");
   const [skillDescription, setSkillDescription] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const [votingRequestId, setVotingRequestId] = useState("");
   const categories = useMemo(() => [...new Set(skills.map((skill) => skill.category))], [skills]);
 
   useEffect(() => {
     setLoading(true);
+    const courseFilters = new URLSearchParams({ search: query, limit: "6" });
+    if (category) courseFilters.set("category", category);
+    if (difficulty) courseFilters.set("difficulty", difficulty);
+    if (price) courseFilters.set("price", price);
     Promise.all([
-      request(`/skills?${new URLSearchParams({ search: query, category, limit: "9" })}`),
-      request(`/courses?${new URLSearchParams({ search: query, limit: "6" })}`),
+      request(`/skills?${new URLSearchParams({ search: query, category, limit: "100" })}`),
+      request(`/courses?${courseFilters}`),
       request("/skills/requests")
     ]).then(([skillResult, courseResult, requestResult]) => {
       setSkills(skillResult.skills);
@@ -32,7 +40,7 @@ export default function HomePage() {
       setError("");
     }).catch((reason) => setError(errorMessage(reason)))
       .finally(() => setLoading(false));
-  }, [query, category]);
+  }, [query, category, difficulty, price]);
 
   async function suggestSkill(event) {
     event.preventDefault();
@@ -53,6 +61,24 @@ export default function HomePage() {
     }
   }
 
+  async function vote(item) {
+    setNotice("");
+    setError("");
+    setVotingRequestId(item._id);
+    try {
+      await request(`/skills/requests/${item._id}/vote`, {
+        method: item.hasVoted ? "DELETE" : "POST"
+      });
+      setNotice(item.hasVoted ? "Your vote has been removed." : "Your vote has been added.");
+      const { requests: updated } = await request("/skills/requests");
+      setRequests(updated.slice(0, 4));
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setVotingRequestId("");
+    }
+  }
+
   return (
     <>
       <section className="hero">
@@ -61,10 +87,10 @@ export default function HomePage() {
           <div className="hero-kicker"><span className="status-dot" />A marketplace built around what you want to learn</div>
           <h1>Start with a skill.<br /><em>Go further.</em></h1>
           <p>Find independent educators, practical courses, and the support to turn curiosity into real capability.</p>
-          <form className="search-box" onSubmit={(event) => { event.preventDefault(); setQuery(search.trim()); }}>
+          <form className="search-box" onSubmit={(event) => { event.preventDefault(); setCategory(""); setQuery(search.trim()); }}>
             <span className="search-icon">⌕</span>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="What would you love to learn?" aria-label="Search skills and courses" />
-            <button className="button" type="submit" onClick={() => setCategory("")}>Explore <span>↗</span></button>
+            <button className="button" type="submit">Explore <span>↗</span></button>
           </form>
           <div className="hero-trust"><span className="avatar-stack"><i>A</i><i>M</i><i>J</i></span><span>Made for curious people and independent educators</span></div>
         </div>
@@ -81,17 +107,18 @@ export default function HomePage() {
       {error && <div className="container"><Notice tone="error">{error}</Notice></div>}
       {notice && <div className="container"><Notice tone="success">{notice}</Notice></div>}
 
-      <section className="container section">
+      <section className="container section" id="skills">
         <div className="section-heading">
-          <PageTitle eyebrow="Find your starting point" title="Skills worth exploring">
+          <PageTitle eyebrow="Find your starting point" title={query ? `Results for “${query}”` : category ? `Explore ${category}` : "Skills worth exploring"}>
             Discover a subject first. Then find the educators and courses that fit you.
           </PageTitle>
-          <Link className="text-link" to="/#skills" onClick={() => { setCategory(""); setQuery(""); }}>Browse all skills <span>↗</span></Link>
+          <Link className="text-link" to="/#skills" onClick={() => { setCategory(""); setQuery(""); setSearch(""); setShowAllSkills(true); }}>Browse all skills <span>↗</span></Link>
         </div>
         {loading ? <Loading label="Finding skills…" /> : skills.length
-          ? <div className="skill-grid">{skills.map((skill) => <SkillCard key={skill._id} skill={skill} />)}</div>
+          ? <div className="skill-grid">{(showAllSkills ? skills : skills.slice(0, 9)).map((skill) => <SkillCard key={skill._id} skill={skill} />)}</div>
           : <Empty title="No skills found">Try another search or suggest a skill that is missing.</Empty>}
-        {categories.length > 0 && <div className="category-row"><span>Browse by area</span>{categories.slice(0, 6).map((categoryName) => <button key={categoryName} onClick={() => { setQuery(""); setCategory(categoryName); }}>{categoryName} <span>↗</span></button>)}</div>}
+        {!showAllSkills && skills.length > 9 && <button className="button button-outline" onClick={() => setShowAllSkills(true)}>Show all {skills.length} skills</button>}
+        {categories.length > 0 && <div className="category-row"><span>Browse by area</span>{categories.map((categoryName) => <button key={categoryName} onClick={() => { setQuery(""); setSearch(""); setCategory(categoryName); }}>{categoryName} <span>↗</span></button>)}</div>}
       </section>
 
       <section className="soft-section">
@@ -102,13 +129,30 @@ export default function HomePage() {
             </PageTitle>
             <span className="muted">{courses.length} course{courses.length === 1 ? "" : "s"}</span>
           </div>
+          <div className="discovery-filters" aria-label="Filter courses">
+            <label>Level
+              <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
+                <option value="">Any level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </label>
+            <label>Price
+              <select value={price} onChange={(event) => setPrice(event.target.value)}>
+                <option value="">Any price</option>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+          </div>
           {loading ? <Loading label="Finding courses…" /> : courses.length
             ? <div className="course-grid">{courses.map((course) => <CourseCard key={course._id} course={course} />)}</div>
             : <Empty title="Your next course is taking shape">Approved courses will appear here as educators publish them.</Empty>}
         </div>
       </section>
 
-      <section className="container section demand-section" id="skills">
+      <section className="container section demand-section" id="skill-requests">
         <div className="demand-copy">
           <span className="eyebrow">The catalogue grows with you</span>
           <h2>Can't find the skill<br />you're looking for?</h2>
@@ -125,8 +169,10 @@ export default function HomePage() {
           {requests.length ? requests.map((item) => (
             <div className="request-row" key={item._id}>
               <span className="request-glyph">＋</span><span className="request-name"><b>{item.name}</b><small>{item.description || "A learner-requested skill"}</small></span><span className="vote-count">{item.voteCount || 0}<small>votes</small></span>
+              {user && <button className="button button-outline button-small" disabled={votingRequestId === item._id} onClick={() => vote(item)}>{votingRequestId === item._id ? "Saving…" : item.hasVoted ? "Remove vote" : "Vote"}</button>}
             </div>
           )) : <Empty title="Be the first to suggest">New skill requests will show up here.</Empty>}
+          {!user && requests.length > 0 && <p className="fine-print"><Link to="/login">Sign in</Link> to vote for a suggestion.</p>}
           <p className="fine-print">Suggestions are reviewed before appearing in the public skill catalogue.</p>
         </div>
       </section>

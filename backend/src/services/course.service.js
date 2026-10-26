@@ -109,11 +109,21 @@ export async function reviewCourse(adminId, courseId, { status, rejectionReason 
   return course;
 }
 
-export async function listPublishedCourses({ skillId, educatorId, search, limit = 30 }) {
+export async function listPublishedCourses({ skillId, educatorId, category, search, difficulty, price, limit = 30 }) {
   const filter = { status: "published" };
   if (skillId) filter.skillId = skillId;
   if (educatorId) filter.educatorId = educatorId;
-  if (search) filter.title = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+  if (category && !skillId) {
+    const skills = await Skill.find({ category, status: "approved" }).select("_id");
+    filter.skillId = { $in: skills.map((skill) => skill._id) };
+  }
+  if (search) {
+    const expression = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+    filter.$or = [{ title: expression }, { description: expression }];
+  }
+  if (difficulty) filter.difficulty = difficulty;
+  if (price === "free") filter.pricePaise = 0;
+  if (price === "paid") filter.pricePaise = { $gt: 0 };
   return Course.find(filter).select("-modules").populate("skillId", "name slug")
     .populate("educatorId", "name").sort({ publishedAt: -1 }).limit(Math.min(Number(limit) || 30, 100));
 }

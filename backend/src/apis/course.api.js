@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
 import * as controller from "../controllers/course.controller.js";
 import * as enrollmentController from "../controllers/enrollment.controller.js";
 import { authenticate } from "../middlewares/authenticate.middleware.js";
@@ -10,28 +11,24 @@ import {
   updateCourseSchema,
   moduleSchema,
   lessonSchema,
-  updateModuleSchema
+  updateModuleSchema,
+  updateLessonSchema,
+  lessonVideoUploadSchema,
+  completeLessonVideoUploadSchema,
+  lessonVideoSchema
 } from "../validators/courses.validator.js";
 import { progressSchema } from "../validators/payments.validator.js";
-import { z } from "zod";
-
-const objectId = z.string().regex(/^[a-f\d]{24}$/i);
-const updateLessonSchema = z.object({
-  params: z.object({ courseId: objectId, moduleId: objectId, lessonId: objectId }),
-  body: z.object({
-    title: z.string().trim().min(1).max(160).optional(),
-    description: z.string().trim().max(2000).optional(),
-    videoAssetId: z.string().trim().max(300).optional(),
-    durationSeconds: z.number().int().min(0).optional(),
-    isPreview: z.boolean().optional(),
-    resources: z.array(z.object({
-      title: z.string().trim().max(160),
-      url: z.url().refine((value) => ["http:", "https:"].includes(new URL(value).protocol))
-    }).strict()).max(20).optional()
-  }).strict().refine((body) => Object.keys(body).length > 0)
-});
 
 const router = Router();
+const videoUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.user._id),
+  message: { success: false, message: "Too many video upload authorizations; try again later" }
+});
+
 router.get("/", validate(courseQuerySchema), controller.list);
 router.get("/mine", authenticate, requireCapability("educator"), controller.myCourses);
 router.post("/", authenticate, requireCapability("educator"), validate(createCourseSchema), controller.create);
@@ -43,6 +40,9 @@ router.post("/:courseId/modules", authenticate, requireCapability("educator"), v
 router.patch("/:courseId/modules/:moduleId", authenticate, requireCapability("educator"), validate(updateModuleSchema), controller.updateModule);
 router.post("/:courseId/modules/:moduleId/lessons", authenticate, requireCapability("educator"), validate(lessonSchema), controller.addLesson);
 router.patch("/:courseId/modules/:moduleId/lessons/:lessonId", authenticate, requireCapability("educator"), validate(updateLessonSchema), controller.updateLesson);
+router.post("/:courseId/modules/:moduleId/lessons/:lessonId/video-upload", authenticate, requireCapability("educator"), videoUploadLimiter, validate(lessonVideoUploadSchema), controller.createVideoUpload);
+router.post("/:courseId/modules/:moduleId/lessons/:lessonId/video", authenticate, requireCapability("educator"), validate(completeLessonVideoUploadSchema), controller.completeVideoUpload);
+router.get("/:courseId/modules/:moduleId/lessons/:lessonId/video", authenticate, validate(lessonVideoSchema), controller.lessonVideo);
 router.patch("/:courseId", authenticate, requireCapability("educator"), validate(updateCourseSchema), controller.update);
 router.get("/:courseId", validate(idParamSchema("courseId")), controller.get);
 

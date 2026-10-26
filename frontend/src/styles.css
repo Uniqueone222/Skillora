@@ -267,6 +267,7 @@ p { line-height: 1.7; }
 .lesson-video-placeholder h1 { max-width: 600px; margin: 10px 0; font-size: 29px; }
 .lesson-video-placeholder p { max-width: 470px; color: #c3c7d4; font-size: 11px; }
 .lesson-video-placeholder small { color: #9299ae; font-size: 9px; }
+.lesson-video-player { width: 100%; max-height: 70vh; aspect-ratio: 16 / 9; border-radius: 10px; background: #090b13; object-fit: contain; }
 .lesson-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 22px; padding: 19px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .lesson-toolbar p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
 .lesson-description, .resource-list { padding: 20px 5px; border-bottom: 1px solid var(--line); }
@@ -302,6 +303,10 @@ p { line-height: 1.7; }
 .module-box { margin-bottom: 12px; padding: 13px; border-radius: 10px; background: #f8f8fb; }
 .module-box h4 { margin-bottom: 7px; font-size: 12px; }
 .lesson-chip { display: inline-block; margin: 0 6px 8px 0; padding: 5px 8px; border-radius: 14px; background: #eeedf9; color: #635ba7; font-size: 9px; }
+.lesson-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 5px 0; }
+.lesson-editor small { color: var(--muted); font-size: 9px; }
+.video-upload-control { display: inline-flex; align-items: center; gap: 7px; color: var(--violet-dark); font-size: 9px; font-weight: 700; cursor: pointer; }
+.video-upload-control input { max-width: 205px; font-size: 9px; }
 .inline-builder { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
 .inline-builder input { flex: 1 1 145px; min-height: 35px; padding: 7px 9px; font-size: 9px; }
 .inline-builder .button { flex: 0 0 auto; }

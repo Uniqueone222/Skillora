@@ -4,6 +4,9 @@ const lessonSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true, maxlength: 160 },
   description: { type: String, trim: true, maxlength: 2000, default: "" },
   videoAssetId: { type: String, trim: true, maxlength: 300, default: "" },
+  videoPublicId: { type: String, trim: true, maxlength: 300, default: "" },
+  videoFormat: { type: String, trim: true, maxlength: 20, default: "" },
+  videoVersion: { type: Number, min: 0, default: 0 },
   durationSeconds: { type: Number, min: 0, default: 0 },
   isPreview: { type: Boolean, default: false },
   resources: [{ title: { type: String, trim: true }, url: { type: String, trim: true } }]

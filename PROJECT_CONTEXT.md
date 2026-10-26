@@ -1601,9 +1601,13 @@ Requirements:
 -   Do not assume an upload succeeded merely because the browser
     initiated it.
 
-Cloudinary or Mux are possible choices. Choose one after checking
-current pricing, free-tier constraints, playback protection, and
-integration requirements.
+Cloudinary Free is selected for this implementation. Uploads use
+authenticated assets and server-signed requests; the server checks
+course ownership, verifies uploaded asset metadata, and gates signed
+playback URL issuance by preview status, enrollment, or course ownership.
+Cloudinary Free signed delivery URLs are shareable bearer links and do
+not expire, so they must not be described as per-viewer or time-limited
+access. The MVP accepts MP4 and WebM uploads up to 100 MB.
 
 ------------------------------------------------------------------------
 
@@ -2019,8 +2023,8 @@ product direction:
 -   Keep the platform commission at zero until the product owner
     finalizes a rate.
 -   Include persisted REST messaging. Defer Socket.IO and live delivery.
--   Defer mentorship, media upload/playback, reviews, notifications,
-    subscriptions, teams, and analytics.
+-   Defer mentorship, reviews, notifications, subscriptions, teams, and
+    analytics.
 
 Implementation choices are recorded in `docs/decisions.md`. Do not
 silently expand this MVP scope.

@@ -54,6 +54,32 @@ export const updateLesson = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { course } });
 });
 
+export const createVideoUpload = asyncHandler(async (req, res) => {
+  const upload = await courseService.createLessonVideoUpload(
+    req.user._id,
+    req.validated.params
+  );
+  res.status(201).json({ success: true, data: upload });
+});
+
+export const completeVideoUpload = asyncHandler(async (req, res) => {
+  const result = await courseService.completeLessonVideoUpload(
+    req.user._id,
+    req.validated.params,
+    req.validated.body
+  );
+  res.json({ success: true, data: result });
+});
+
+export const lessonVideo = asyncHandler(async (req, res) => {
+  const playback = await courseService.getLessonPlayback(
+    req.user._id,
+    req.validated.params
+  );
+  res.set("Cache-Control", "no-store");
+  res.json({ success: true, data: playback });
+});
+
 export const submit = asyncHandler(async (req, res) => {
   const course = await courseService.submitCourse(req.user._id, req.validated.params.courseId);
   res.json({ success: true, data: { course } });

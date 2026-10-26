@@ -39,6 +39,21 @@ test("messaging endpoints require authentication", async (context) => {
   assert.equal(response.status, 401);
 });
 
+test("video upload authorization and playback routes require authentication", async (context) => {
+  const server = app.listen(0);
+  context.after(() => new Promise((resolve) => server.close(resolve)));
+  await new Promise((resolve) => server.once("listening", resolve));
+
+  const path = "/api/courses/aaaaaaaaaaaaaaaaaaaaaaaa/modules/bbbbbbbbbbbbbbbbbbbbbbbb/lessons/cccccccccccccccccccccccc/video";
+  const playbackResponse = await fetch(`http://127.0.0.1:${server.address().port}${path}`);
+  const uploadResponse = await fetch(`http://127.0.0.1:${server.address().port}${path}-upload`, {
+    method: "POST"
+  });
+
+  assert.equal(playbackResponse.status, 401);
+  assert.equal(uploadResponse.status, 401);
+});
+
 test("registration validates input before reaching persistence", async (context) => {
   const server = app.listen(0);
   context.after(() => new Promise((resolve) => server.close(resolve)));

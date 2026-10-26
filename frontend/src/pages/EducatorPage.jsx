@@ -4,12 +4,15 @@ import { errorMessage, request } from "../api.js";
 import { useAuth } from "../AuthContext.jsx";
 import { formatINR, Loading, Notice, PageTitle } from "../components/ui.jsx";
 
+const MAX_VIDEO_BYTES = 100 * 1000 * 1000;
+
 export default function EducatorPage() {
   const { user, refresh } = useAuth();
   const [profile, setProfile] = useState(null);
   const [courses, setCourses] = useState([]);
   const [skills, setSkills] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [videoBusyId, setVideoBusyId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [courseForm, setCourseForm] = useState({ title: "", description: "", skillId: "", price: "0", difficulty: "beginner" });
@@ -118,7 +121,6 @@ export default function EducatorPage() {
         data: {
           title: form.get("title"),
           description: form.get("description") || "",
-          videoAssetId: form.get("videoAssetId") || "",
           isPreview: form.get("isPreview") === "on"
         }
       });
@@ -127,6 +129,50 @@ export default function EducatorPage() {
       setNotice("Lesson added.");
     } catch (reason) {
       setError(errorMessage(reason));
+    }
+  }
+
+  async function uploadLessonVideo(courseId, moduleId, lessonId, file) {
+    if (!file) return;
+    setError("");
+    setNotice("");
+    if (!["video/mp4", "video/webm"].includes(file.type)) {
+      setError("Choose an MP4 or WebM video.");
+      return;
+    }
+    if (file.size > MAX_VIDEO_BYTES) {
+      setError("Videos must be no larger than 100 MB.");
+      return;
+    }
+
+    setVideoBusyId(lessonId);
+    try {
+      const path = `/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`;
+      const authorization = await request(`${path}/video-upload`, { method: "POST" });
+      const form = new FormData();
+      form.append("file", file);
+      form.append("api_key", authorization.apiKey);
+      form.append("signature", authorization.signature);
+      for (const [key, value] of Object.entries(authorization.parameters)) {
+        form.append(key, String(value));
+      }
+
+      const response = await fetch(authorization.uploadUrl, { method: "POST", body: form });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error?.message || "Cloudinary could not upload this video.");
+      }
+
+      const completion = await request(`${path}/video`, {
+        method: "POST",
+        data: { uploadTicket: authorization.uploadTicket, assetId: result.asset_id }
+      });
+      setNotice(completion.cleanupWarning || "Video uploaded and attached to the lesson.");
+      await loadStudio();
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setVideoBusyId("");
     }
   }
 
@@ -179,9 +225,9 @@ export default function EducatorPage() {
           <div className="studio-course-head"><div><span className={`status-pill status-${course.status}`}>{course.status}</span><h3>{course.title}</h3><span className="muted">{course.skillId?.name} · {formatINR(course.pricePaise)}</span></div>{course.status === "published" && <Link className="text-link" to={`/courses/${course._id}`}>View course ↗</Link>}</div>
           {["draft", "rejected"].includes(course.status) && <div className="course-builder">
             {course.status === "rejected" && <Notice tone="error">Admin feedback: {course.rejectionReason || "Please review your course."}</Notice>}
-            {course.modules.map((module) => <div className="module-box" key={module._id}><h4>{module.title}</h4>{module.lessons.map((lesson) => <span className="lesson-chip" key={lesson._id}>{lesson.title}{lesson.isPreview && " · preview"}</span>)}<form className="inline-builder" onSubmit={(event) => addLesson(course._id, module._id, event)}><input name="title" required placeholder="Lesson title" /><input name="description" placeholder="Short description" /><input name="videoAssetId" placeholder="Optional media asset ID" /><label className="check-label"><input type="checkbox" name="isPreview" /> Preview</label><button className="button button-small">Add lesson</button></form></div>)}
+            {course.modules.map((module) => <div className="module-box" key={module._id}><h4>{module.title}</h4>{module.lessons.map((lesson) => <div className="lesson-editor" key={lesson._id}><span className="lesson-chip">{lesson.title}{lesson.isPreview && " · preview"}</span><label className="video-upload-control">{videoBusyId === lesson._id ? "Uploading…" : lesson.videoAssetId ? "Replace video" : "Upload video"}<input type="file" accept="video/mp4,video/webm" disabled={Boolean(videoBusyId)} onChange={(event) => { const input = event.currentTarget; uploadLessonVideo(course._id, module._id, lesson._id, input.files?.[0]).finally(() => { input.value = ""; }); }} /></label>{lesson.videoAssetId && <small>Video attached · {lesson.durationSeconds}s</small>}</div>)}<form className="inline-builder" onSubmit={(event) => addLesson(course._id, module._id, event)}><input name="title" required placeholder="Lesson title" /><input name="description" placeholder="Short description" /><label className="check-label"><input type="checkbox" name="isPreview" /> Preview</label><button className="button button-small">Add lesson</button></form></div>)}
             <form className="inline-builder module-builder" onSubmit={(event) => addModule(course._id, event)}><input name="title" required placeholder="New module title" /><input name="description" placeholder="Short description" /><button className="button button-outline button-small">Add module</button></form>
-            <div className="builder-actions"><span className="fine-print">Media hosting/playback setup is deferred; course text and access rules are ready.</span><button className="button button-small" onClick={() => submitCourse(course._id)} disabled={!course.modules.length || !course.modules.some((module) => module.lessons.length)}>Submit for review <span>↗</span></button></div>
+            <div className="builder-actions"><span className="fine-print">Videos upload directly to authenticated Cloudinary storage. Free-tier signed playback links can be shared by anyone who receives them.</span><button className="button button-small" onClick={() => submitCourse(course._id)} disabled={!course.modules.length || !course.modules.some((module) => module.lessons.length)}>Submit for review <span>↗</span></button></div>
           </div>}
           {course.status === "submitted" && <p className="muted">This course is in the admin review queue. It will not appear in public discovery until approved.</p>}
         </article>)}</div> : <div className="empty-state"><span className="empty-mark">✳</span><h3>Your first course begins with a skill</h3><p>Create a course draft above, then add modules and lessons.</p></div>}

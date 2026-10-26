@@ -91,7 +91,7 @@ export default function CoursePage() {
             <div><span className="eyebrow">Skill</span><strong>{course.skillId?.name}</strong></div>
             <div><span className="eyebrow">Content status</span><strong>Reviewed and published</strong></div>
           </div>
-          <div className="detail-note"><span>✳</span><p>Course video hosting is not connected yet. Lessons can be authored and protected; configure a media provider before adding playable video.</p></div>
+          <div className="detail-note"><span>✳</span><p>Course videos use authenticated Cloudinary storage. Free-tier signed playback links can be shared by anyone who receives them.</p></div>
         </div>
         <aside className="purchase-card">
           <span className="eyebrow">Start learning</span>
